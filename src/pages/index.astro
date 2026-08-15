@@ -1,13 +1,81 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import PlaceCard from '../components/PlaceCard.astro';
+import SanityImage from '../components/SanityImage.astro';
+import WhatsAppCta from '../components/WhatsAppCta.astro';
+import { getPlaces, getSiteSettings } from '../lib/sanity/queries';
+
+const settings = await getSiteSettings();
+const places = (await getPlaces()).slice(0, 3);
+
+const heroTitle = settings?.heroTitle ?? 'פק"ל';
+const heroTagline = settings?.heroTagline ?? 'נהנים בכל דרך';
+const heroText =
+  settings?.heroText ??
+  'משחק קלפים משפחתי כחול-לבן שמחבר בין משחקים אהובים, אתרים בישראל וחוויות טיול לכל המשפחה.';
+
+const features = [
+  {
+    title: 'סרקו וצאו לדרך',
+    body: 'סרקו את הקוד שבגב הקלף וקבלו גישה מהירה למסלולים, מידע והשראה לטיול הבא.',
+  },
+  { title: 'מטיילים באמת', body: 'כל קלף מחבר אתכם לאתר או מסלול בארץ, עם הסברים, טיפים והמלצות.' },
+  {
+    title: 'משחק פק"ל המקורי',
+    body: 'קלפי פעולה, דמויות משפחת מטיילים וחוקים ייחודיים לחוויה משפחתית מלאת הפתעות.',
+  },
+  { title: 'משחקים מוכרים', body: 'שחקו מלחמה, רמי ומשחקי קלפים אהובים עם חפיסה איכותית ומיוחדת.' },
+];
 ---
 
-<BaseLayout
-  title='פק"ל — נהנים בכל דרך'
-  description="משחק קלפים משפחתי כחול-לבן שמחבר בין משחקים אהובים, אתרים בישראל וחוויות טיול."
->
-  <section class="mx-auto max-w-6xl px-4 py-16">
-    <h1 class="text-4xl font-bold">פק"ל</h1>
-    <p class="mt-4">נהנים בכל דרך</p>
+<BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText}>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <div class="grid items-center gap-8 lg:grid-cols-2">
+      <div>
+        <h1 class="text-5xl font-bold" style="color: var(--color-brand)">{heroTitle}</h1>
+        <p class="mt-2 text-2xl" style="color: var(--color-brand)">{heroTagline}</p>
+        <p class="mt-6 max-w-prose">{heroText}</p>
+        <div class="mt-8 flex flex-wrap gap-4">
+          {
+            settings?.whatsappPhone && (
+              <WhatsAppCta
+                phone={settings.whatsappPhone}
+                message={settings.purchaseMessage ?? 'היי, אשמח לפרטים על רכישת המשחק'}
+                label="לרכישת המשחק"
+              />
+            )
+          }
+          <a
+            href="/treks"
+            class="inline-block rounded-lg border-2 px-6 py-3 font-semibold"
+            style="border-color: var(--color-brand); color: var(--color-brand)"
+          >
+            למסלולים שבחפיסה
+          </a>
+        </div>
+        <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
+      </div>
+      {settings?.heroImage && <SanityImage image={settings.heroImage} class="rounded-2xl" />}
+    </div>
+
+    <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {features.map((feature) => <FeatureCard title={feature.title} body={feature.body} />)}
+    </div>
+
+    {
+      places.length > 0 && (
+        <div class="mt-16">
+          <h2 class="text-2xl font-bold">מהמסלולים שבחפיסה</h2>
+          <ul class="mt-6 grid gap-6 sm:grid-cols-3">
+            {places.map((place) => (
+              <li>
+                <PlaceCard place={place} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
   </section>
 </BaseLayout>
