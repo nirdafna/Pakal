@@ -930,8 +930,13 @@ import { schemaTypes } from './sanity/schemaTypes';
 export default defineConfig({
   name: 'pakal',
   title: 'פק"ל',
-  projectId: process.env.PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.PUBLIC_SANITY_DATASET ?? 'production',
+  // `import.meta.env`, NOT `process.env`. This file is bundled into the Studio's
+  // client-side island, and Vite rewrites `process.env` to `{}` in browser code —
+  // which yields `projectId: undefined` with a green build and a 200 response,
+  // failing only once the Studio tries to connect. Astro exposes PUBLIC_-prefixed
+  // vars to the client through `import.meta.env`.
+  projectId: import.meta.env.PUBLIC_SANITY_PROJECT_ID,
+  dataset: import.meta.env.PUBLIC_SANITY_DATASET ?? 'production',
   plugins: [structureTool()],
   schema: { types: schemaTypes },
 });
@@ -1210,6 +1215,10 @@ if (!token) {
 }
 
 const client = createClient({
+  // `process.env` is correct HERE and wrong in `sanity.config.ts`: this script
+  // runs only under tsx in Node, never in a browser bundle. The Studio config
+  // ships to the client, where Vite rewrites `process.env` to `{}` and the id
+  // silently becomes undefined — so that file uses `import.meta.env` instead.
   projectId: process.env.PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.PUBLIC_SANITY_DATASET ?? 'production',
   apiVersion: '2026-08-15',
