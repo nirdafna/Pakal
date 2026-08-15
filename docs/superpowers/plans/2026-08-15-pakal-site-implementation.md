@@ -128,9 +128,11 @@ npx astro add tailwind vercel react --yes
 - [ ] **Step 4: Add test and font dependencies**
 
 ```bash
-npm install -D vitest
+npm install -D vitest @astrojs/check typescript
 npm install @fontsource-variable/assistant
 ```
+
+`@astrojs/check` is what backs the `astro check` command used as the lint script below. Without it installed explicitly, `astro check` prompts to install it interactively — which hangs a CI run rather than failing it.
 
 `@fontsource-variable/assistant` self-hosts the Hebrew webfont, which the spec (§9) requires instead of a Google Fonts request. It is the standard font-packaging project, ships only static font files, and pulls no transitive dependencies.
 
@@ -145,14 +147,14 @@ In `package.json`, ensure the `scripts` block reads:
     "build": "astro build",
     "preview": "astro preview",
     "lint": "astro check",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "astro sync && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
   }
 }
 ```
 
-`astro check` is Astro's built-in diagnostic pass over `.astro` files; `tsc --noEmit` covers the full TypeScript graph including test files, which the build does not.
+`astro check` is Astro's built-in diagnostic pass over `.astro` files; `tsc --noEmit` covers the full TypeScript graph including test files, which the build does not. `astro sync` must run first: it generates the type declarations for Astro's virtual modules (`astro:content`, and later `sanity:client`), which do not exist on a fresh checkout — so a CI run without it fails on imports that are correct.
 
 - [ ] **Step 6: Create `vitest.config.ts`**
 
@@ -252,7 +254,9 @@ git commit -m "feat: scaffold Astro project with Tailwind, Vercel adapter and Vi
 ### Task 2: CI workflows, PR template, branch protection
 
 **Files:**
-- Create: `.github/workflows/test.yml`, `.github/workflows/e2e.yml`, `.github/pull_request_template.md`
+- Create: `.github/workflows/test.yml`, `.github/pull_request_template.md`
+
+The e2e workflow deliberately lands in Task 10, alongside the suite it runs — a workflow that invokes `playwright test` before Playwright is installed fails on the first push to `main`.
 
 **Interfaces:**
 - Consumes: the npm scripts from Task 1 (`lint`, `typecheck`, `test`).
@@ -354,66 +358,7 @@ jobs:
       - run: npm test
 ```
 
-- [ ] **Step 3: Create `.github/workflows/e2e.yml`**
-
-The Playwright suite itself arrives in Task 10; the workflow lands now so CI configuration is one reviewable change. Until then it runs an empty suite, which passes.
-
-```yaml
-name: E2E Tests
-
-# Smoke coverage of what ships, NOT a pre-merge gate: it runs post-merge,
-# nightly, and on demand. Keeping it off per-PR runs avoids paying for the
-# slowest job in the repo on every push.
-on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '.claude/**'
-      - '*.md'
-  schedule:
-    - cron: '30 2 * * *' # 02:30 UTC
-  workflow_dispatch:
-
-concurrency:
-  group: e2e-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: read
-
-jobs:
-  e2e-tests:
-    runs-on: ubuntu-latest
-    # GitHub's default job ceiling is 6 HOURS and it bills every minute of a
-    # hung step. Normal runtime here is ~2 min.
-    timeout-minutes: 15
-    env:
-      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
-      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
-      - run: npm run test:e2e
-```
-
-Both Sanity values are **repository variables, not secrets** — a project id and dataset name are public identifiers that ship in the client bundle. Storing them as secrets would imply a confidentiality they do not have.
-
-- [ ] **Step 4: Add the `test:e2e` script so the workflow above resolves**
-
-In `package.json` scripts, add:
-
-```json
-"test:e2e": "playwright test"
-```
-
-- [ ] **Step 5: Create `.github/pull_request_template.md`**
+- [ ] **Step 3: Create `.github/pull_request_template.md`**
 
 ```markdown
 ## What & why
@@ -428,7 +373,7 @@ In `package.json` scripts, add:
 - [ ] New behavior has at least one test; a bug fix has a regression test.
 ```
 
-- [ ] **Step 6: Verify locally, then push and open the PR**
+- [ ] **Step 4: Verify locally, then push and open the PR**
 
 ```bash
 npm run lint && npm run typecheck && npm test
@@ -438,12 +383,12 @@ git push -u origin feature/ci
 gh pr create --fill
 ```
 
-- [ ] **Step 7: Confirm the checks actually ran**
+- [ ] **Step 5: Confirm the checks actually ran**
 
 Run: `gh pr checks`
 Expected: `lint`, `typecheck`, `unit-tests` all pass. If a job shows as skipped on a code PR, the `changes` detector is wrong — fix it before merging, because this is the mechanism protecting every later PR.
 
-- [ ] **Step 8: Merge, then apply branch protection**
+- [ ] **Step 6: Merge, then apply branch protection**
 
 ```bash
 gh pr merge --squash --delete-branch
@@ -475,7 +420,7 @@ JSON
 
 Zero required approvals is deliberate — a solo maintainer who cannot approve their own PR would be locked out of their own repository. The rule still forces every change through a PR, which is what makes CI run before merge.
 
-- [ ] **Step 9: HUMAN GATE — import the repo into Vercel**
+- [ ] **Step 7: HUMAN GATE — import the repo into Vercel**
 
 Nir, in the browser: Vercel → scope `Pakal` → **Add New… → Project** → **Import Git Repository** → `nirdafna/Pakal`. If it is not listed, use *Adjust GitHub App Permissions* to grant access. Confirm Framework Preset is **Astro** and Root Directory is `./`. Do not add environment variables yet. Click **Deploy**.
 
@@ -1835,11 +1780,12 @@ git push -u origin feature/content-pages && gh pr create --fill
 ### Task 10: Playwright smoke suite
 
 **Files:**
-- Create: `playwright.config.ts`, `e2e/smoke.spec.ts`
+- Create: `playwright.config.ts`, `e2e/smoke.spec.ts`, `.github/workflows/e2e.yml`
+- Modify: `package.json` (add the `test:e2e` script)
 
 **Interfaces:**
 - Consumes: every route built in Tasks 3, 6, 7, 8, 9.
-- Produces: `npm run test:e2e`, already referenced by `e2e.yml` from Task 2.
+- Produces: `npm run test:e2e` and the workflow that runs it.
 
 - [ ] **Step 1: Create the branch and install Playwright**
 
@@ -1920,12 +1866,68 @@ test('every WhatsApp link is a valid wa.me URL', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 4: Run the suite locally**
+- [ ] **Step 4: Add the `test:e2e` script**
+
+In `package.json` scripts, add:
+
+```json
+"test:e2e": "playwright test"
+```
+
+- [ ] **Step 5: Run the suite locally**
 
 Run: `npm run test:e2e`
 Expected: 6 passed.
 
-- [ ] **Step 5: Verify, commit, PR**
+- [ ] **Step 6: Create `.github/workflows/e2e.yml`**
+
+```yaml
+name: E2E Tests
+
+# Smoke coverage of what ships, NOT a pre-merge gate: it runs post-merge,
+# nightly, and on demand. Keeping it off per-PR runs avoids paying for the
+# slowest job in the repo on every push.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '.claude/**'
+      - '*.md'
+  schedule:
+    - cron: '30 2 * * *' # 02:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    # GitHub's default job ceiling is 6 HOURS and it bills every minute of a
+    # hung step. Normal runtime here is ~2 min.
+    timeout-minutes: 15
+    env:
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+```
+
+Both Sanity values are **repository variables, not secrets** — a project id and dataset name are public identifiers that ship in the client bundle. Storing them as secrets would imply a confidentiality they do not have. The workflow does not run `npm run build` separately: `playwright.config.ts` builds and previews via its `webServer` block.
+
+- [ ] **Step 7: Verify, commit, PR**
 
 ```bash
 npm run lint && npm run typecheck && npm test
@@ -1934,7 +1936,7 @@ git commit -m "test: add Playwright smoke suite covering the QR contract"
 git push -u origin feature/smoke-tests && gh pr create --fill
 ```
 
-- [ ] **Step 6: Confirm the e2e workflow passes post-merge**
+- [ ] **Step 8: Confirm the e2e workflow passes post-merge**
 
 After merging, run: `gh run list --workflow=e2e.yml --limit 1`
 Expected: the run triggered by the merge to `main` is green.
