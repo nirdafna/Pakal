@@ -20,6 +20,18 @@ describe('parseCardNumber', () => {
   it('rejects numbers beyond any plausible deck size', () => {
     expect(parseCardNumber('100000')).toBeNull();
   });
+
+  it('accepts the number just below the deck-size cutoff', () => {
+    expect(parseCardNumber('999')).toBe(999);
+  });
+
+  it('accepts the deck-size cutoff itself, which is inclusive', () => {
+    expect(parseCardNumber('1000')).toBe(1000);
+  });
+
+  it('rejects the number just above the deck-size cutoff', () => {
+    expect(parseCardNumber('1001')).toBeNull();
+  });
 });
 
 describe('resolveCardPath', () => {

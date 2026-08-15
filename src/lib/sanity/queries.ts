@@ -6,6 +6,13 @@ import type { PageDoc, Place, PlaceSummary, SiteSettings } from './types';
  * Looks up a printed card. Returns null for an unknown number, and a null slug
  * for a card whose place is not attached or not yet published — the client is
  * configured without a token, so drafts are invisible by construction.
+ *
+ * Unlike the other functions in this file, this one is reachable at request
+ * time (from the `/c/[id]` route), not only at build time. It throws on
+ * network or API failure rather than swallowing it — callers reaching it at
+ * request time MUST catch and fall back to the homepage, because an
+ * uncaught rejection there becomes a crash page for someone standing on a
+ * trail holding a printed card, not a build failure a developer sees first.
  */
 export async function getCardByNumber(number: number): Promise<CardLookup | null> {
   return sanityClient.fetch<CardLookup | null>(
