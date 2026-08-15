@@ -19,6 +19,11 @@ export default defineConfig({
     // (e.g. Claude Code). Playwright needs the command to stay in the
     // foreground so it can manage the process's lifecycle itself; this is a
     // no-op outside such environments (plain terminals, CI).
+    //
+    // This is an internal Astro marker, not a documented public flag, so a
+    // future Astro version could rename or reinterpret it silently. Verified
+    // against astro@7.2.2 and @astrojs/node@11.1.0 — re-check this behavior
+    // when bumping either.
     command: 'E2E=1 npm run build && E2E=1 ASTRO_PREVIEW_BACKGROUND=1 npm run preview',
     url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,

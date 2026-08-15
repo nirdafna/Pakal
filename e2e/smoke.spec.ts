@@ -37,7 +37,15 @@ test('the landmark index renders', async ({ page }) => {
 test('every WhatsApp link is a valid wa.me URL', async ({ page }) => {
   await page.goto('/');
   const links = page.locator('a[href*="wa.me"]');
-  for (let i = 0; i < (await links.count()); i += 1) {
+  const count = await links.count();
+
+  // Until `siteSettings.whatsappPhone` is published there are no CTAs to check,
+  // and a loop over zero elements would pass green having asserted nothing —
+  // the worst outcome for a test guarding "a malformed link is a lost sale with
+  // no error anywhere". Skipping makes the gap visible in the run report.
+  test.skip(count === 0, 'no WhatsApp CTA rendered — siteSettings.whatsappPhone not published yet');
+
+  for (let i = 0; i < count; i += 1) {
     const href = await links.nth(i).getAttribute('href');
     expect(href).toMatch(/^https:\/\/wa\.me\/\d{6,}/);
   }
