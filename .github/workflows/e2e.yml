@@ -1,0 +1,41 @@
+name: E2E Tests
+
+# Smoke coverage of what ships, NOT a pre-merge gate: it runs post-merge,
+# nightly, and on demand. Keeping it off per-PR runs avoids paying for the
+# slowest job in the repo on every push.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '.claude/**'
+      - '*.md'
+  schedule:
+    - cron: '30 2 * * *' # 02:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    # GitHub's default job ceiling is 6 HOURS and it bills every minute of a
+    # hung step. Normal runtime here is ~2 min.
+    timeout-minutes: 15
+    env:
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
