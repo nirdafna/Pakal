@@ -1,0 +1,24 @@
+---
+import { urlFor } from '../lib/sanity/image';
+import type { SanityImage } from '../lib/sanity/types';
+
+interface Props {
+  image: SanityImage;
+  width?: number;
+  class?: string;
+}
+
+const { image, width = 1200, class: className } = Astro.props;
+const src = urlFor(image).width(width).url();
+const src2x = urlFor(image).width(width * 2).url();
+---
+
+<img
+  src={src}
+  srcset={`${src} 1x, ${src2x} 2x`}
+  alt={image.alt ?? ''}
+  width={width}
+  loading="lazy"
+  decoding="async"
+  class={className}
+/>

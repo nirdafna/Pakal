@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PlaceCard from '../../components/PlaceCard.astro';
+import { getPlaces } from '../../lib/sanity/queries';
+
+const places = await getPlaces();
+---
+
+<BaseLayout
+  title='המסלולים שבחפיסה — פק"ל'
+  description="כל האתרים והמסלולים שמופיעים על הקלפים, עם מידע לטיול הבא."
+>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <h1 class="text-3xl font-bold">המסלולים שבחפיסה</h1>
+    {
+      places.length === 0 ? (
+        <p class="mt-6">התוכן בהכנה. בקרוב יעלו כאן המסלולים והאתרים שעל הקלפים.</p>
+      ) : (
+        <ul class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {places.map((place) => (
+            <li>
+              <PlaceCard place={place} />
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</BaseLayout>
