@@ -1,1 +1,23 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import '@fontsource-variable/assistant';
+
+:root {
+  --color-brand: #1b3a6b;
+  --color-accent: #c8322e;
+  --color-cta: #4a8b3b;
+  --color-sand: #f4efe6;
+  --color-ink: #24303f;
+  --font-hebrew: 'Assistant Variable', system-ui, sans-serif;
+}
+
+html {
+  font-family: var(--font-hebrew);
+  color: var(--color-ink);
+  background-color: var(--color-sand);
+}
+
+/* Numbers and Latin words inside Hebrew text reorder incorrectly without
+   isolation — "7 ק"מ" is the common failure. Apply to any mixed-script run. */
+.bidi-isolate {
+  unicode-bidi: isolate;
+}

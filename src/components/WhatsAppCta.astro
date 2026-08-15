@@ -1,0 +1,35 @@
+---
+import { buildWhatsAppUrl } from '../lib/whatsapp';
+
+interface Props {
+  phone: string;
+  message: string;
+  label: string;
+  variant?: 'primary' | 'outline';
+}
+
+const { phone, message, label, variant = 'primary' } = Astro.props;
+const href = buildWhatsAppUrl(phone, message);
+
+const classes =
+  variant === 'primary'
+    ? 'inline-block rounded-lg px-6 py-3 font-semibold text-white'
+    : 'inline-block rounded-lg border-2 px-6 py-3 font-semibold';
+---
+
+{
+  href && (
+    <a
+      href={href}
+      class={classes}
+      style={
+        variant === 'primary'
+          ? 'background-color: var(--color-cta)'
+          : 'border-color: var(--color-brand); color: var(--color-brand)'
+      }
+      rel="noopener"
+    >
+      {label}
+    </a>
+  )
+}

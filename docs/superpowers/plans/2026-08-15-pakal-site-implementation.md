@@ -620,7 +620,7 @@ const year = new Date().getFullYear();
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
-<BaseLayout title="הדף לא נמצא — פק&quot;ל">
+<BaseLayout title='הדף לא נמצא — פק"ל'>
   <section class="mx-auto max-w-2xl px-4 py-16 text-center">
     <h1 class="text-3xl font-bold">הדף לא נמצא</h1>
     <p class="mt-4">ייתכן שהקישור השתנה. אפשר לחזור לדף הבית ולהמשיך משם.</p>
@@ -637,7 +637,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout
-  title="פק&quot;ל — נהנים בכל דרך"
+  title='פק"ל — נהנים בכל דרך'
   description="משחק קלפים משפחתי כחול-לבן שמחבר בין משחקים אהובים, אתרים בישראל וחוויות טיול."
 >
   <section class="mx-auto max-w-6xl px-4 py-16">
@@ -1411,7 +1411,7 @@ const places = await getPlaces();
 ---
 
 <BaseLayout
-  title="המסלולים שבחפיסה — פק&quot;ל"
+  title='המסלולים שבחפיסה — פק"ל'
   description="כל האתרים והמסלולים שמופיעים על הקלפים, עם מידע לטיול הבא."
 >
   <section class="mx-auto max-w-6xl px-4 py-12">
@@ -1687,7 +1687,7 @@ const page = await getPage('how-to-play');
 
 <BaseLayout
   title='איך משחקים — פק"ל'
-  description="חוקי המשחק והדרכים לשחק בחפיסת פק&quot;ל."
+  description='חוקי המשחק והדרכים לשחק בחפיסת פק"ל.'
 >
   <section class="mx-auto max-w-3xl px-4 py-12">
     <h1 class="text-3xl font-bold">{page?.title ?? 'איך משחקים'}</h1>
@@ -1716,7 +1716,7 @@ const [page, settings] = await Promise.all([getPage('corporate'), getSiteSetting
 
 <BaseLayout
   title='מתנה לחברות — פק"ל'
-  description="פק&quot;ל כמתנה לעובדים וללקוחות — הזמנות בכמויות."
+  description='פק"ל כמתנה לעובדים וללקוחות — הזמנות בכמויות.'
 >
   <section class="mx-auto max-w-3xl px-4 py-12">
     <h1 class="text-3xl font-bold">{page?.title ?? 'מתנה לחברות'}</h1>
