@@ -5,12 +5,32 @@ import type { SanityImage } from '../lib/sanity/types';
 interface Props {
   image: SanityImage;
   width?: number;
+  /**
+   * Set true for the LCP element on a page (the homepage hero, the first
+   * landmark image) so it loads eagerly at high priority instead of being
+   * lazy-loaded — lazy-loading the LCP image delays first paint for exactly
+   * the weak-connection reader this stack was chosen to serve.
+   */
+  priority?: boolean;
   class?: string;
 }
 
-const { image, width = 1200, class: className } = Astro.props;
+const { image, width = 1200, priority = false, class: className } = Astro.props;
 const src = urlFor(image).width(width).url();
 const src2x = urlFor(image).width(width * 2).url();
+
+// Sanity asset refs encode the uploaded image's original pixel dimensions as
+// `image-<id>-<width>x<height>-<format>`. Parsing them lets us emit a real
+// `height` alongside `width`, so the browser reserves the correct box before
+// the image loads — and keeps that space reserved if the image fails to load
+// — instead of the layout collapsing to zero height, per the design spec's
+// "missing images ... layout does not collapse" rule. Refs that don't match
+// (e.g. test fixtures) fall back to a fixed 3:2 ratio so space is always
+// reserved either way.
+const dimensionMatch = image.asset._ref.match(/-(\d+)x(\d+)-\w+$/);
+const height = dimensionMatch
+  ? Math.round((width * Number(dimensionMatch[2])) / Number(dimensionMatch[1]))
+  : Math.round((width * 2) / 3);
 ---
 
 <img
@@ -18,7 +38,9 @@ const src2x = urlFor(image).width(width * 2).url();
   srcset={`${src} 1x, ${src2x} 2x`}
   alt={image.alt ?? ''}
   width={width}
-  loading="lazy"
+  height={height}
+  loading={priority ? 'eager' : 'lazy'}
+  fetchpriority={priority ? 'high' : undefined}
   decoding="async"
   class={className}
 />

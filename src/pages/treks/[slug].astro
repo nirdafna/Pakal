@@ -1,17 +1,33 @@
 ---
+// Server-rendered rather than prerendered: a prerendered landmark page can be
+// older than a live `/c/[id]` redirect (rebuild window, an as-yet-nonexistent
+// publish webhook, or a failed build leaving a stale deploy serving), which
+// would turn a valid scan into a 404 — the outcome §11 of the design spec
+// declares impossible. Reading live also means `getStaticPaths` is
+// meaningless here and has been removed rather than left as dead code.
+export const prerender = false;
+
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PortableText from '../../components/PortableText.astro';
 import SanityImage from '../../components/SanityImage.astro';
-import { getPlaceBySlug, getPlaces } from '../../lib/sanity/queries';
-
-export async function getStaticPaths() {
-  const places = await getPlaces();
-  return places.map((place) => ({ params: { slug: place.slug } }));
-}
+import { getPlaceBySlug } from '../../lib/sanity/queries';
 
 const { slug } = Astro.params;
-const place = await getPlaceBySlug(slug!);
+
+let place;
+try {
+  place = await getPlaceBySlug(slug!);
+} catch {
+  // A Sanity outage at request time must degrade to a redirect, not a 500 —
+  // matching the fail-home discipline of `/c/[id]`.
+  return Astro.redirect('/treks', 302);
+}
 if (!place) return Astro.redirect('/treks', 302);
+
+// Vercel's edge caches this response, so an on-demand route still serves
+// statically in practice; s-maxage keeps it fresh enough that a newly
+// published landmark shows up within a minute rather than at the next deploy.
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
 
 const facts = [
   place.lengthKm !== undefined && { label: 'אורך', value: `${place.lengthKm} ק"מ` },
@@ -26,7 +42,9 @@ const facts = [
     <h1 class="text-3xl font-bold">{place.title}</h1>
     {place.region && <p class="mt-1 opacity-70">{place.region}</p>}
 
-    {place.images?.[0] && <SanityImage image={place.images[0]} class="mt-6 rounded-xl" />}
+    {place.images?.[0] && (
+      <SanityImage image={place.images[0]} priority class="mt-6 rounded-xl" />
+    )}
 
     {
       facts.length > 0 && (
@@ -55,7 +73,7 @@ const facts = [
     {
       place.mapUrl && (
         <p class="mt-8">
-          <a class="underline" href={place.mapUrl} rel="noopener" target="_blank">
+          <a class="underline" href={place.mapUrl} rel="noopener noreferrer" target="_blank">
             פתיחת המיקום במפה
           </a>
         </p>

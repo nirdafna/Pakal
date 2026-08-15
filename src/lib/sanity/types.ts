@@ -8,7 +8,10 @@ export interface SanityImage {
 export interface PlaceSummary {
   title: string;
   slug: string;
-  kind: 'trek' | 'site';
+  // The schema (`sanity/schemaTypes/place.ts`) sets only `initialValue`, not
+  // `required()`, so a document can exist without `kind` — the type must not
+  // assert a guarantee the schema doesn't make.
+  kind?: 'trek' | 'site';
   region?: string;
   summary?: string;
   image?: SanityImage;

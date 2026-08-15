@@ -76,9 +76,9 @@ ordering constraint, so the same machinery would be cost without benefit.
 `@astrojs/vercel@11.0.5` depends on `@vercel/routing-utils@5.3.3`, which declares
 `path-to-regexp` as an exact `6.1.0` — not a range — so `npm install` can never resolve it to
 a newer, patched version on its own. `path-to-regexp@6.1.0` is inside the affected range
-(`>=4.0.0 <6.3.0`) of a high-severity ReDoS advisory, `path-to-regexp` outputs backtracking
-regular expressions (GHSA-9wv6-86v2-598j, CVSS 7.5). `npm audit`'s own suggested fix was to
-downgrade `@astrojs/vercel` to `8.0.4` — a major-version regression whose Astro 7
+(`>=4.0.0 <6.3.0`) of a high-severity ReDoS advisory, because `path-to-regexp` outputs
+backtracking regular expressions (GHSA-9wv6-86v2-598j, CVSS 7.5). `npm audit`'s own suggested
+fix was to downgrade `@astrojs/vercel` to `8.0.4` — a major-version regression whose Astro 7
 compatibility was never verified — so instead `package.json` carries
 `"overrides": { "path-to-regexp": "^6.3.0" }`, which forces the same dependency-tree position
 to resolve to the first patched `6.x` release instead. `6.1.0 → 6.3.0` is a minor bump within

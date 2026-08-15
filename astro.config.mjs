@@ -23,6 +23,11 @@ const useNodeAdapter = process.env.E2E === '1';
 
 // https://astro.build/config
 export default defineConfig({
+  // Placeholder production URL: the real domain is a deferred decision (see
+  // §14 of the design spec) and must be updated here once it's connected —
+  // needed to build absolute canonical/og:url links for WhatsApp sharing.
+  site: 'https://pakal.vercel.app',
+
   vite: {
     plugins: [tailwindcss()]
   },

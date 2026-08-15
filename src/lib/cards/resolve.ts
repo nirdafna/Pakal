@@ -19,11 +19,23 @@ export function parseCardNumber(raw: string | undefined): number | null {
 }
 
 /**
+ * The Studio-side slug validator (`sanity/schemaTypes/place.ts`) only
+ * constrains edits made through the Studio UI; a raw API write can bypass it
+ * entirely. A slug is trusted here only after being re-checked against the
+ * same pattern, because an unvalidated slug interpolated into a redirect
+ * path can carry characters (e.g. CR/LF) that make `Astro.redirect()` throw
+ * when Node rejects the resulting `Location` header — an uncatchable 500 for
+ * someone holding a printed card.
+ */
+const VALID_SLUG = /^[a-z0-9-]+$/;
+
+/**
  * Maps a card lookup to a destination path. Every failure resolves to the
  * homepage: the person hitting a failure here is a stranger holding a printed
  * card, and a dead end is unrecoverable for them.
  */
 export function resolveCardPath(card: CardLookup | null): string {
   if (!card?.slug) return '/';
+  if (!VALID_SLUG.test(card.slug)) return '/';
   return `/treks/${card.slug}`;
 }
