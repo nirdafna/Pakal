@@ -2089,6 +2089,10 @@ Gates before the site goes live on its real domain.
 ## Content
 - [ ] No placeholder artwork anywhere in production (spec §15).
 - [ ] Real WhatsApp number set in `siteSettings`; every CTA opens the right chat.
+- [ ] **Confirm the e2e run stops reporting `1 skipped`.** The wa.me test skips itself while no
+      CTA is rendered. It cannot tell "not published yet" from "published but the CTA template
+      broke" — both produce zero links in the DOM. Once `whatsappPhone` is published, that test
+      must show as *passed*; if it still skips, the CTA is not rendering and that is a bug.
 - [ ] `how-to-play`, `corporate`, `faq` pages hold real copy, not fallback text.
 - [ ] At least the launch set of landmark pages is published.
 
