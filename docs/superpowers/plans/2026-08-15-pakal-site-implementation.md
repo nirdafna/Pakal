@@ -242,11 +242,14 @@ PUBLIC_SANITY_DATASET=production
 Run: `npm run lint && npm run typecheck && npm test && npm run build`
 Expected: all four succeed; `dist/` is produced.
 
-- [ ] **Step 13: Commit**
+- [ ] **Step 13: Commit, push, open the PR**
+
+Every task ends with an open PR; the controller merges it after review, so the next task's `git checkout main` starts from the merged work.
 
 ```bash
 git add -A
 git commit -m "feat: scaffold Astro project with Tailwind, Vercel adapter and Vitest"
+git push -u origin feature/scaffold && gh pr create --fill
 ```
 
 ---
