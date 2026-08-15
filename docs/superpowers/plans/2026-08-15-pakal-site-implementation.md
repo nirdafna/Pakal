@@ -6,7 +6,7 @@
 
 **Architecture:** Astro renders every page statically at build time except one server-rendered route, `/c/[id]`, which resolves a printed card's QR code to its landmark page via Sanity and redirects. Content lives in Sanity; its Studio is embedded in this same app at `/studio`. Vercel builds on push through its native Git integration; GitHub Actions runs quality gates only.
 
-**Tech Stack:** Astro 6 · TypeScript (strict) · Tailwind CSS 4 · Sanity (Content Lake + embedded Studio) · Vitest · Playwright · Vercel
+**Tech Stack:** Astro 7 · TypeScript (strict) · Tailwind CSS 4 · Sanity (Content Lake + embedded Studio) · Vitest · Playwright · Vercel
 
 **Spec:** [`docs/superpowers/specs/2026-08-15-pakal-site-design.md`](../specs/2026-08-15-pakal-site-design.md)
 
@@ -15,7 +15,7 @@
 These apply to **every task** below. They are not repeated per task.
 
 - **Node 22**, npm as package manager (matches CI and the Edut-app convention).
-- **Astro 6.x**, `output` left at its default (`static`); only `/c/[id]` opts out via `export const prerender = false`.
+- **Astro 7.x**, `output` left at its default (`static`); only `/c/[id]` opts out via `export const prerender = false`. Astro 6 is not an option: the whole 6.x line carries three unpatched high-severity XSS advisories (fixed first in 7.1.0), and `@astrojs/vercel` 11 peer-depends on `^7.0.0`. Astro 7's Rust compiler errors on unclosed tags rather than auto-correcting them, so keep template HTML strictly valid.
 - **Hebrew is the only content language.** `<html lang="he" dir="rtl">` on every page.
 - **CSS logical properties only.** `margin-inline-start`, `padding-inline`, `inset-inline-start`, `text-align: start`. Never `left`/`right`/`ml-`/`mr-`. In Tailwind use `ms-*`/`me-*`/`ps-*`/`pe-*`, never `ml-*`/`mr-*`/`pl-*`/`pr-*`.
 - **URL path segments are ASCII.** Hebrew appears in content, `<title>`, and meta only — never in a path.
@@ -699,10 +699,12 @@ printf 'PUBLIC_SANITY_PROJECT_ID=<the id>\nPUBLIC_SANITY_DATASET=production\n' >
 
 ```bash
 git checkout main && git pull && git checkout -b feature/sanity-studio
-npm install @sanity/astro @sanity/client sanity @sanity/image-url @portabletext/to-html
+npm install @sanity/astro @sanity/client sanity @sanity/image-url @portabletext/to-html styled-components react-is
 ```
 
-All five are first-party Sanity packages except `@portabletext/to-html`, which is also maintained by Sanity and is the framework-agnostic way to render rich text — chosen over a community Astro wrapper to keep the dependency count and the trust surface smaller.
+`styled-components` and `react-is` are not optional extras: `@sanity/astro` declares both as peer dependencies (the Studio UI is built on styled-components). Installing them explicitly avoids an unmet-peer warning that later reads as a missing-module error at Studio load.
+
+The Sanity packages are all first-party, as is `@portabletext/to-html`, which is also maintained by Sanity and is the framework-agnostic way to render rich text — chosen over a community Astro wrapper to keep the dependency count and the trust surface smaller.
 
 - [ ] **Step 3: Wire the integration in `astro.config.mjs`**
 
