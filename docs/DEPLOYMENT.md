@@ -11,8 +11,9 @@
 
 A docs-only PR (touching only `docs/`, `.claude/`, or root `*.md` files) skips the heavy
 `lint`/`typecheck`/`unit-tests` jobs — a job-level `if:` in `.github/workflows/test.yml`
-reports them as passed rather than leaving the required check stuck pending, so a docs PR
-can still merge.
+gives them GitHub's `skipped` conclusion, which satisfies a required check, rather than
+leaving it stuck "Expected" the way a workflow-level path filter would. Confirmed on this
+PR (#13): all three jobs completed with conclusion `skipped`.
 
 The end-to-end suite (`.github/workflows/e2e.yml`) is not a pre-merge gate: it runs after a
 push to `main`, nightly at 02:30 UTC, and on manual dispatch — never on a PR. It's the
