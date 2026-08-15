@@ -1511,7 +1511,7 @@ const facts = [
     {
       place.mapUrl && (
         <p class="mt-8">
-          <a class="underline" href={place.mapUrl} rel="noopener" target="_blank">
+          <a class="underline" href={place.mapUrl} rel="noopener noreferrer" target="_blank">
             פתיחת המיקום במפה
           </a>
         </p>
