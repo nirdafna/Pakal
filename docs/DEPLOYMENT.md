@@ -25,8 +25,11 @@ slowest job in the repo, so it isn't paid for on every push.
 | Production | push to `main` | the production domain |
 | Preview | any PR | per-PR `*.vercel.app` URL |
 
-**Not yet done:** the repository has not been imported into Vercel, and no domain is
-connected. Both are outstanding on the owner's queue — see the launch checklist.
+The repository is already imported into Vercel — project `pakal` under team `pakal`
+(confirmed live: the Vercel GitHub integration comments on every PR and attempts a preview
+build). **Not yet done:** no production domain is connected yet, and — see below — the
+required env vars aren't set, so every build currently fails. Both are outstanding on the
+owner's queue — see the launch checklist.
 
 ## Environment variables
 
@@ -39,8 +42,10 @@ environments (Production, Preview, Development):
 | `PUBLIC_SANITY_DATASET` | `production` |
 
 The same two are already set as GitHub Actions **repository variables**, consumed by
-`e2e.yml`. **Not yet done:** the Vercel env vars themselves are not yet set — outstanding on
-the owner's queue.
+`e2e.yml`. **Not yet done:** the Vercel env vars themselves are not yet set — confirmed live
+while writing this doc, every Vercel preview build on this repo currently fails (`astro
+build` throws when it can't reach a project id). Setting them is outstanding on the owner's
+queue.
 
 `SANITY_WRITE_TOKEN` is required **only** for running `scripts/seed-cards.ts` locally. It is
 never set in Vercel or CI — the site never writes to the CMS.
@@ -83,5 +88,7 @@ The filter deliberately excludes `card`: card changes are read live by `/c/[id]`
 need a rebuild, so including them would burn build minutes for no visible change.
 
 **Not yet done:** this hook does not exist yet. Both dashboard steps are outstanding on the
-owner's queue. Until it's wired up, a content publish in `/studio` has no effect on the live
-site until someone triggers a manual redeploy in Vercel.
+owner's queue — the Vercel project already exists, so step 1 is directly actionable, but a
+hook-triggered build will keep failing until the env vars above are set. Until the hook is
+wired up, a content publish in `/studio` has no effect on the live site until someone
+triggers a manual redeploy in Vercel.

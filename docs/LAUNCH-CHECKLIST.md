@@ -24,9 +24,12 @@ Gates before the site goes live on its real domain.
 - [ ] `/c/<n>` for an unlinked card lands on the homepage, not an error.
 
 ## Platform
-- [ ] Repository imported into Vercel (not yet done as of this writing).
+- [x] Repository imported into Vercel — project `pakal` under team `pakal` (confirmed live
+      while writing this checklist: the Vercel GitHub integration is active and attempts a
+      preview build on every PR).
 - [ ] `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` set on all three Vercel
-      environments (not yet done as of this writing).
+      environments. **Not yet done** — confirmed live while writing this checklist, every
+      Vercel preview build currently fails for exactly this reason.
 - [ ] Vercel plan appropriate for commercial use, on the account that will own the site.
 - [ ] Vercel deploy hook `sanity-publish` and Sanity webhook `vercel-rebuild` created (not
       yet done as of this writing — see `docs/DEPLOYMENT.md`).
