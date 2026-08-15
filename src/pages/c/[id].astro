@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+
+import { getCardByNumber } from '../../lib/sanity/queries';
+import { parseCardNumber, resolveCardPath } from '../../lib/cards/resolve';
+
+const number = parseCardNumber(Astro.params.id);
+
+let target = '/';
+if (number !== null) {
+  try {
+    target = resolveCardPath(await getCardByNumber(number));
+  } catch {
+    // The CMS being unreachable must not produce an error page: the reader is
+    // standing somewhere with a printed card and no way to recover. Send home.
+    target = '/';
+  }
+}
+// `astro check` cannot see `target` being read inside the `return` expression
+// below (a top-level `return` in frontmatter isn't standard JS control flow,
+// so its argument falls outside the language server's reachability graph) and
+// flags it as an unused write. This line is a no-op for the language server only.
+void target;
+
+// 302, not 301: the mapping is expected to change as content is filled in, and
+// a permanent redirect cached in a phone's browser would outlive the fix.
+return Astro.redirect(target, 302);
+---
