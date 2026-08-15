@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PortableText from '../../components/PortableText.astro';
+import SanityImage from '../../components/SanityImage.astro';
+import { getPlaceBySlug, getPlaces } from '../../lib/sanity/queries';
+
+export async function getStaticPaths() {
+  const places = await getPlaces();
+  return places.map((place) => ({ params: { slug: place.slug } }));
+}
+
+const { slug } = Astro.params;
+const place = await getPlaceBySlug(slug!);
+if (!place) return Astro.redirect('/treks', 302);
+
+const facts = [
+  place.lengthKm !== undefined && { label: 'אורך', value: `${place.lengthKm} ק"מ` },
+  place.durationHours !== undefined && { label: 'משך', value: `${place.durationHours} שעות` },
+  place.difficulty && { label: 'רמת קושי', value: place.difficulty },
+  place.season && { label: 'עונה מומלצת', value: place.season },
+].filter(Boolean) as { label: string; value: string }[];
+---
+
+<BaseLayout title={`${place.title} — פק"ל`} description={place.summary}>
+  <article class="mx-auto max-w-3xl px-4 py-12">
+    <h1 class="text-3xl font-bold">{place.title}</h1>
+    {place.region && <p class="mt-1 opacity-70">{place.region}</p>}
+
+    {place.images?.[0] && <SanityImage image={place.images[0]} class="mt-6 rounded-xl" />}
+
+    {
+      facts.length > 0 && (
+        <dl class="mt-6 grid grid-cols-2 gap-4 rounded-xl bg-white p-4 sm:grid-cols-4">
+          {facts.map((fact) => (
+            <div>
+              <dt class="text-xs opacity-70">{fact.label}</dt>
+              <dd class="font-semibold bidi-isolate">{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+
+    <div class="mt-8"><PortableText value={place.body} /></div>
+
+    {
+      place.tips && (
+        <section class="mt-8 rounded-xl bg-white p-4">
+          <h2 class="text-lg font-semibold">טיפים</h2>
+          <p class="mt-2 whitespace-pre-line">{place.tips}</p>
+        </section>
+      )
+    }
+
+    {
+      place.mapUrl && (
+        <p class="mt-8">
+          <a class="underline" href={place.mapUrl} rel="noopener" target="_blank">
+            פתיחת המיקום במפה
+          </a>
+        </p>
+      )
+    }
+  </article>
+</BaseLayout>

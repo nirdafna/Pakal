@@ -1,0 +1,13 @@
+---
+import { toHTML } from '@portabletext/to-html';
+import type { PortableTextBlock } from '@portabletext/types';
+
+interface Props {
+  value: PortableTextBlock[] | undefined;
+}
+
+const { value } = Astro.props;
+const html = value?.length ? toHTML(value) : '';
+---
+
+{html && <div class="prose-pakal" set:html={html} />}
