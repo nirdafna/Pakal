@@ -70,3 +70,31 @@ reproduce platform behavior.
 **Alternatives rejected:** *Porting Edut-app's `deploy.yml`* — that workflow exists there
 because Supabase migrations must be pushed before the app deploys. Pakal has no such
 ordering constraint, so the same machinery would be cost without benefit.
+
+## 2026-08-15 — Pin `path-to-regexp` to `^6.3.0` via an npm `overrides` entry
+
+`@astrojs/vercel@11.0.5` depends on `@vercel/routing-utils@5.3.3`, which declares
+`path-to-regexp` as an exact `6.1.0` — not a range — so `npm install` can never resolve it to
+a newer, patched version on its own. `path-to-regexp@6.1.0` is inside the affected range
+(`>=4.0.0 <6.3.0`) of a high-severity ReDoS advisory, `path-to-regexp` outputs backtracking
+regular expressions (GHSA-9wv6-86v2-598j, CVSS 7.5). `npm audit`'s own suggested fix was to
+downgrade `@astrojs/vercel` to `8.0.4` — a major-version regression whose Astro 7
+compatibility was never verified — so instead `package.json` carries
+`"overrides": { "path-to-regexp": "^6.3.0" }`, which forces the same dependency-tree position
+to resolve to the first patched `6.x` release instead. `6.1.0 → 6.3.0` is a minor bump within
+the version `@vercel/routing-utils` already targets, so no API break is expected.
+
+**Removal condition:** this override becomes unnecessary — and should be deleted — the day
+`@astrojs/vercel` ships a version whose own dependency tree resolves `path-to-regexp` to
+`>=6.3.0` (or migrates `@vercel/routing-utils` off it entirely) without help. Check
+`npm ls path-to-regexp` after any `@astrojs/vercel` upgrade; if it now resolves to a patched
+version on its own, remove the `overrides` block. Until then, if `@astrojs/vercel` ever moves
+its own dependency to `path-to-regexp@8.x`, this override will silently force it back down to
+`6.x` and can break routing in a way that is hard to trace back to this entry — so re-check
+this line specifically whenever `@astrojs/vercel` is upgraded.
+
+**Alternatives rejected:** *`npm audit fix --force`'s suggested downgrade to
+`@astrojs/vercel@8.0.4`* — resolves the advisory too, but drops three major versions of the
+adapter for unverified Astro 7 compatibility, trading a documented, narrow pin for an
+undocumented, broad regression. *Leaving it unpatched* — the CVSS 7.5 ReDoS is real and the
+package is a direct runtime dependency of the deploy adapter.
