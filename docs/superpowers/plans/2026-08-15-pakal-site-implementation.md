@@ -680,27 +680,34 @@ git push -u origin feature/base-layout && gh pr create --fill
 - Consumes: nothing from earlier tasks.
 - Produces: the document types `card`, `place`, `page`, `siteSettings` with exactly the field names below — Task 5's GROQ queries depend on these names character-for-character. Also produces the `sanity:client` virtual module for all later data access.
 
-- [ ] **Step 1: HUMAN GATE — create the Sanity project**
+- [x] **Step 1: HUMAN GATE — create the Sanity project — DONE 2026-08-15**
 
-Nir runs these; both are interactive and open a browser:
+Done. Sanity now requires an organization above projects, so both were created:
 
-```bash
-npx sanity login
-npx sanity projects create "Pakal" --dataset production
+| | |
+|---|---|
+| Organization | `Pakal` — `okTbUDl4F` |
+| Project | `Pakal` — **`6203ycx6`** |
+| Dataset | `production`, **public** |
+| Manage | https://www.sanity.io/manage/project/6203ycx6 |
+
+The dataset is public on purpose: the site reads content without an API token, so there is no secret to leak, rotate, or forget in an env var. The content is public marketing copy either way.
+
+`.env` is already written locally and is gitignored:
+
 ```
-
-Copy the printed **project ID** and put it in `.env` locally:
-
-```bash
-printf 'PUBLIC_SANITY_PROJECT_ID=<the id>\nPUBLIC_SANITY_DATASET=production\n' > .env
+PUBLIC_SANITY_PROJECT_ID=6203ycx6
+PUBLIC_SANITY_DATASET=production
 ```
 
 - [ ] **Step 2: Create the branch and install Sanity packages**
 
 ```bash
 git checkout main && git pull && git checkout -b feature/sanity-studio
-npm install @sanity/astro @sanity/client sanity @sanity/image-url @portabletext/to-html styled-components react-is
+npm install @sanity/astro @sanity/client sanity@6.9.1 @sanity/image-url @portabletext/to-html styled-components react-is
 ```
+
+`sanity` is pinned to **6.9.1**, not latest. The supply-chain hook enforces a 7-day cooldown on newly published versions — the window in which a compromised release is live on the registry and not yet caught — and 6.9.2 was published inside it. 6.9.1 is nine days old and clears the rule without an override, which is the point: satisfy the guard rather than bypass it. Drop the pin once 6.9.2 or later has aged past the threshold.
 
 `styled-components` and `react-is` are not optional extras: `@sanity/astro` declares both as peer dependencies (the Studio UI is built on styled-components). Installing them explicitly avoids an unmet-peer warning that later reads as a missing-module error at Studio load.
 
@@ -937,9 +944,9 @@ Check: log in; all four document types appear in Hebrew; create one `place` (tit
 
 - [ ] **Step 9: HUMAN GATE — add the env vars to Vercel**
 
-Nir, in the browser: Vercel → project → **Settings → Environment Variables**. Add `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET=production` to **Production, Preview, and Development**. Missing them on Preview breaks every PR preview while production looks fine.
+Nir, in the browser: Vercel → project → **Settings → Environment Variables**. Add `PUBLIC_SANITY_PROJECT_ID=6203ycx6` and `PUBLIC_SANITY_DATASET=production` to **Production, Preview, and Development**. Missing them on Preview breaks every PR preview while production looks fine.
 
-Then GitHub → repo → **Settings → Secrets and variables → Actions → Variables** → add the same two names, for the e2e workflow.
+The GitHub half is **already done** — repository variables `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` were set via `gh variable set` on 2026-08-15. They are variables, not secrets: a project id and dataset name ship in the client bundle, so storing them as secrets would imply a confidentiality they do not have.
 
 - [ ] **Step 10: Verify, commit, PR**
 
