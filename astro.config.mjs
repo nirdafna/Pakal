@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import vercel from '@astrojs/vercel';
+import node from '@astrojs/node';
 import react from '@astrojs/react';
 import sanity from '@sanity/astro';
 import { loadEnv } from 'vite';
@@ -15,13 +16,18 @@ const { PUBLIC_SANITY_PROJECT_ID, PUBLIC_SANITY_DATASET } = loadEnv(
   '',
 );
 
+// @astrojs/vercel has no previewEntrypoint, so `astro preview` can't serve a
+// server build made with it. E2E builds swap in @astrojs/node (which does
+// support preview) via E2E=1; production keeps the real Vercel adapter.
+const useNodeAdapter = process.env.E2E === '1';
+
 // https://astro.build/config
 export default defineConfig({
   vite: {
     plugins: [tailwindcss()]
   },
 
-  adapter: vercel(),
+  adapter: useNodeAdapter ? node({ mode: 'standalone' }) : vercel(),
   integrations: [
     sanity({
       projectId: PUBLIC_SANITY_PROJECT_ID,

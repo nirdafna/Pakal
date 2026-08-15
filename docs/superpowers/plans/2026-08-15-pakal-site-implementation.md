@@ -1812,9 +1812,36 @@ git push -u origin feature/content-pages && gh pr create --fill
 
 ```bash
 git checkout main && git pull && git checkout -b feature/smoke-tests
-npm install -D @playwright/test
+npm install -D @playwright/test @astrojs/node@11.1.0
 npx playwright install chromium
 ```
+
+**Why a second adapter.** `@astrojs/vercel` does not implement `previewEntrypoint`, so `astro preview` refuses to run as soon as any route is server-rendered — and `/c/[id]` is. Without a preview server there is nothing for Playwright to drive. `@astrojs/node` supports preview, so the e2e run builds with it while production keeps using the Vercel adapter.
+
+The alternative, testing against `astro dev`, was rejected on evidence from this project: the Studio's `projectId` resolving to `undefined` existed **only** in built output and `astro dev` rendered it fine. Testing the dev server would leave that entire failure class invisible.
+
+`11.1.0` is pinned rather than latest: it is nine days old and clears the supply-chain cooldown, where 11.1.1 and 11.1.2 do not. It declares `astro: ^7.0.0`.
+
+The honest caveat: a Node-adapter build is not byte-identical to the Vercel one, so these tests verify the built application, not the exact deployed artifact. Testing against a real Vercel preview deployment would close that last gap and is worth adding later.
+
+- [ ] **Step 1b: Make the adapter selectable in `astro.config.mjs`**
+
+Add the import and swap the adapter line. Everything else in the file stays as it is.
+
+```js
+import node from '@astrojs/node';
+
+// E2E=1 builds with the Node adapter so `astro preview` can serve the
+// server-rendered /c/[id] route. Production always builds with Vercel.
+const useNodeAdapter = process.env.E2E === '1';
+
+export default defineConfig({
+  adapter: useNodeAdapter ? node({ mode: 'standalone' }) : vercel(),
+  // ...unchanged
+});
+```
+
+The variable is read at config load, so **both** the build and the preview must run with `E2E=1` — otherwise the build produces a Vercel bundle that preview then refuses to serve.
 
 - [ ] **Step 2: Write `playwright.config.ts`**
 
@@ -1829,8 +1856,11 @@ export default defineConfig({
   // Tests run against a production build, not the dev server: prerendering and
   // the static/server split only exist in a real build, and that split is
   // exactly what the /c/[id] tests below are checking.
+  //
+  // E2E=1 on BOTH commands: it selects the Node adapter at config-load time,
+  // and `astro preview` cannot serve a Vercel-adapter build.
   webServer: {
-    command: 'npm run build && npm run preview',
+    command: 'E2E=1 npm run build && E2E=1 npm run preview',
     url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
@@ -1880,7 +1910,15 @@ test('the landmark index renders', async ({ page }) => {
 test('every WhatsApp link is a valid wa.me URL', async ({ page }) => {
   await page.goto('/');
   const links = page.locator('a[href*="wa.me"]');
-  for (let i = 0; i < (await links.count()); i += 1) {
+  const count = await links.count();
+
+  // Until `siteSettings.whatsappPhone` is published there are no CTAs to check,
+  // and a loop over zero elements would pass green having asserted nothing —
+  // the worst outcome for a test guarding "a malformed link is a lost sale with
+  // no error anywhere". Skipping makes the gap visible in the run report.
+  test.skip(count === 0, 'no WhatsApp CTA rendered — siteSettings.whatsappPhone not published yet');
+
+  for (let i = 0; i < count; i += 1) {
     const href = await links.nth(i).getAttribute('href');
     expect(href).toMatch(/^https:\/\/wa\.me\/\d{6,}/);
   }
