@@ -1081,7 +1081,7 @@ Expected: PASS — 13 tests across both files.
 - [ ] **Step 6: Write `src/lib/sanity/types.ts`**
 
 ```ts
-import type { PortableTextBlock } from '@portabletext/to-html';
+import type { PortableTextBlock } from '@portabletext/types';
 
 export interface SanityImage {
   asset: { _ref: string };
@@ -1349,7 +1349,7 @@ git checkout main && git pull && git checkout -b feature/trek-pages
 ```astro
 ---
 import { toHTML } from '@portabletext/to-html';
-import type { PortableTextBlock } from '@portabletext/to-html';
+import type { PortableTextBlock } from '@portabletext/types';
 
 interface Props {
   value: PortableTextBlock[] | undefined;
