@@ -20,6 +20,15 @@ const { title, description } = Astro.props;
     <meta property="og:title" content={title} />
     {description && <meta property="og:description" content={description} />}
     <meta property="og:locale" content="he_IL" />
+    {Astro.site && (
+      <>
+        <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).toString()} />
+        <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site).toString()} />
+      </>
+    )}
+    {/* No og:image yet — there is no artwork for it. Outstanding until Aviv supplies real
+        assets (design spec §10/§14); a link shared to WhatsApp will render title/description
+        text only until then. */}
   </head>
   <body class="min-h-screen flex flex-col">
     <Header />

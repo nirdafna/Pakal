@@ -46,4 +46,21 @@ describe('resolveCardPath', () => {
   it('routes home when the card number is unknown', () => {
     expect(resolveCardPath(null)).toBe('/');
   });
+
+  // A raw API write can bypass the Studio-side slug validator
+  // (`/^[a-z0-9-]+$/` in sanity/schemaTypes/place.ts), so resolveCardPath must
+  // not trust the CMS to have enforced it. An unvalidated slug interpolated
+  // into a path can carry CR/LF into `Astro.redirect()`'s Location header,
+  // which Node rejects — turning a valid scan into an uncatchable 500.
+  it('routes home when the slug contains a newline', () => {
+    expect(resolveCardPath({ slug: 'ein-gedi\nSet-Cookie: evil' })).toBe('/');
+  });
+
+  it('routes home when the slug contains a space', () => {
+    expect(resolveCardPath({ slug: 'ein gedi' })).toBe('/');
+  });
+
+  it('routes home when the slug contains Hebrew characters', () => {
+    expect(resolveCardPath({ slug: 'עין-גדי' })).toBe('/');
+  });
 });

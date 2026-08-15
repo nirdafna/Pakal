@@ -56,7 +56,9 @@ const features = [
         </div>
         <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
       </div>
-      {settings?.heroImage && <SanityImage image={settings.heroImage} class="rounded-2xl" />}
+      {settings?.heroImage && (
+        <SanityImage image={settings.heroImage} priority class="rounded-2xl" />
+      )}
     </div>
 
     <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

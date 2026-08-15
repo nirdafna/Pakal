@@ -24,5 +24,13 @@ void target;
 
 // 302, not 301: the mapping is expected to change as content is filled in, and
 // a permanent redirect cached in a phone's browser would outlive the fix.
-return Astro.redirect(target, 302);
+// `resolveCardPath` now validates the slug shape itself, so `target` should
+// never be able to make this throw — but the redirect call sits outside the
+// try/catch above, and a stranger holding a printed card must never see a
+// crash page, so it is guarded here too rather than trusted on faith.
+try {
+  return Astro.redirect(target, 302);
+} catch {
+  return Astro.redirect('/', 302);
+}
 ---
