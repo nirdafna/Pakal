@@ -98,3 +98,41 @@ this line specifically whenever `@astrojs/vercel` is upgraded.
 adapter for unverified Astro 7 compatibility, trading a documented, narrow pin for an
 undocumented, broad regression. *Leaving it unpatched* — the CVSS 7.5 ReDoS is real and the
 package is a direct runtime dependency of the deploy adapter.
+
+## 2026-08-16 — Security headers ship via `vercel.json`; CSP is deferred, not skipped
+
+Baseline security headers (`X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`,
+`Permissions-Policy`, `Strict-Transport-Security`) are declared in `vercel.json` rather than
+in the Astro config or middleware. Most of this site is prerendered, and Astro middleware
+does not run for static responses on Vercel, so a middleware approach would have covered only
+`/c/[id]` and `/treks/[slug]` — the two routes, and left every marketing page bare.
+
+`@astrojs/vercel@11.0.5` reads `vercel.json` only to compare `trailingSlash`, and writes its
+own `.vercel/output/config.json` with `headers: []`. A probe header placed in `vercel.json`
+therefore does **not** appear in the build output — verified locally. That is expected rather
+than broken: Vercel applies `vercel.json` headers at the platform routing layer, which is the
+same mechanism the adapter's own `staticHeaders` option targets. The consequence for us is
+that **this file's effect cannot be verified by a local build** — it needs a deployed preview,
+which is why a check for it was added to the launch checklist rather than a test.
+
+`X-Frame-Options` is `SAMEORIGIN`, not `DENY`, because Sanity's Presentation tool frames the
+site from inside `/studio` on the same origin. `Strict-Transport-Security` deliberately omits
+`preload`: the production domain is still an open decision (spec §14), and preload submission
+is slow to unwind if the domain changes.
+
+Content-Security-Policy is **not** included, and the reason is measured rather than assumed.
+Astro 7's `security.csp` generates per-page script/style hashes and the adapter promotes them
+to real headers — it works, and the build emits a correct policy per route. But the homepage
+sets brand colours through inline `style` attributes, and CSP blocks those: with CSP enabled
+the `h1` computed to `rgb(36, 48, 63)` instead of the brand `rgb(27, 58, 107)`, silently, with
+a green build and no console error. `'unsafe-inline'` does not rescue it, because CSP3 ignores
+`'unsafe-inline'` whenever hashes are present, and Astro rejects a hand-written
+`style-src-attr` in `security.csp.directives`, requiring per-attribute hashes instead. Making
+CSP work therefore requires removing the eight inline `style` attributes first — real work,
+tracked in `docs/FOLLOW-UPS.md`, and out of scope for a headers change.
+
+**Alternatives rejected:** *Astro middleware with `middlewareMode: 'edge'`* — does cover
+static responses, but puts an edge function invocation in front of every request on a
+brochure site to set five constant headers. *Shipping CSP with `'unsafe-inline'` on
+`style-src`* — would have appeared to work while being silently inert, the exact failure mode
+this repo has already been bitten by twice.
