@@ -170,3 +170,41 @@ solo maintainer, per above. *A separate GitHub credential for Claude without mer
 the only true identity boundary available, and still the right answer if the CI gate ever
 proves insufficient; rejected for now as setup cost out of proportion to the risk on a
 brochure site.
+
+## 2026-08-16 — CSP ships, paid for by removing every inline `style` attribute
+
+Content-Security-Policy is enabled via Astro's `security.csp` plus the Vercel adapter's
+`staticHeaders`, which promotes it from a `<meta>` element to a real response header on all
+seven static routes. `script-src 'self' <hashes>` is the directive that earns its place: it
+blocks `javascript:` URL navigation outright, so a bad link reaching an `href` is inert even
+if `safeExternalUrl` ever lets one through. Two independent locks on the same door.
+
+The blocker was six inline `style` attributes carrying brand colours. CSP blocks inline style
+attributes, and there is no cheap exemption: CSP3 ignores `'unsafe-inline'` whenever hashes
+are present, and Astro rejects a hand-written `style-src-attr`, so each attribute would have
+needed its own hash regenerated on every tweak. Measured before the fix, the heading computed
+to `rgb(36, 48, 63)` — the `--color-ink` fallback — instead of the brand `rgb(27, 58, 107)`,
+with a green build, passing tests and no console error.
+
+The fix moves the design tokens from `:root` to Tailwind's `@theme`, which generates
+`text-brand` / `bg-cta` / `border-brand` utilities. Utilities are stylesheet rules, covered by
+one `'self'`. Tailwind still emits each token as a custom property, so any remaining
+`var(--color-*)` reference keeps working.
+
+No `default-src`: it would also govern `img-src` and `connect-src`, and images come from
+`cdn.sanity.io` while the Studio talks to `*.sanity.io`. Adding it without enumerating those
+would break both, so it is deliberately absent rather than forgotten. `object-src 'none'` and
+`base-uri 'self'` are pinned because nothing here uses either.
+
+`e2e/smoke.spec.ts` guards the regression, and asserts the policy is in force *before*
+checking the colour — otherwise the check would pass just as happily with CSP switched off,
+which is the one state it exists to detect.
+
+**Known gap:** `/studio` was verified only to the point of rendering its unconnected "add a
+CORS origin" screen, because localhost is not a registered Sanity origin. Authenticated Studio
+use under CSP is untested and is on the launch checklist.
+
+**Alternatives rejected:** *Hashing the inline style attributes* — every colour tweak would
+silently break the page until someone regenerated a hash. *Shipping CSP with `'unsafe-inline'`
+on `style-src`* — inert in the presence of hashes, so it would have looked like a policy while
+enforcing nothing.

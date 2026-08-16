@@ -1,7 +1,20 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/assistant';
 
-:root {
+/* `@theme` rather than `:root` so Tailwind generates utilities from these
+   tokens — `text-brand`, `bg-cta`, `border-brand` — instead of them being
+   reachable only through an inline `style` attribute.
+
+   That is a Content-Security-Policy requirement, not a style preference. CSP
+   blocks inline style attributes, and hashing them is not a way out: CSP3
+   ignores `'unsafe-inline'` whenever hashes are present, and Astro rejects a
+   hand-written `style-src-attr`, so every attribute would need its own hash
+   regenerated on every tweak. Utilities emit real stylesheet rules, which the
+   policy covers with one `'self'`.
+
+   Tailwind still emits each token as a custom property on `:root`, so any
+   remaining `var(--color-*)` reference keeps working. */
+@theme {
   --color-brand: #1b3a6b;
   --color-accent: #c8322e;
   --color-cta: #4a8b3b;

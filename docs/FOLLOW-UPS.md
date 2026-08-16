@@ -68,17 +68,6 @@ third of the codebase has never executed: `getPlaceBySlug` against real data, `u
 - [ ] **The three content pages** (`how-to-play`, `corporate`, `faq`) are near-identical
       shells. Worth a shared component only if a fourth is added.
 
-- [ ] **Content-Security-Policy, blocked on eight inline `style` attributes.** Astro 7's
-      `security.csp` works and the Vercel adapter promotes it to a real header, but the
-      homepage and `WhatsAppCta` set brand colours via inline `style` attributes, which CSP
-      blocks — measured: the `h1` computes to `rgb(36, 48, 63)` instead of the brand
-      `rgb(27, 58, 107)`, with a green build and no console error. `'unsafe-inline'` cannot
-      fix it (CSP3 ignores it when hashes are present) and Astro rejects a hand-written
-      `style-src-attr`. Move those eight attributes to classes/tokens in `global.css`, then
-      enable `security: { csp: { directives: ["object-src 'none'", "base-uri 'self'"] } }`
-      and `vercel({ staticHeaders: true })`. Verify `/studio` still loads — Sanity Studio is
-      a React app and was never tested under a policy. See `docs/DECISIONS.md`, 2026-08-16.
-
 ## Process
 
 - [ ] **A content guide for Aviv**, in Hebrew. The spec names "Aviv abandons the Studio" as the
