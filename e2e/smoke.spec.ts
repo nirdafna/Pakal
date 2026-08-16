@@ -50,3 +50,38 @@ test('every WhatsApp link is a valid wa.me URL', async ({ page }) => {
     expect(href).toMatch(/^https:\/\/wa\.me\/\d{6,}/);
   }
 });
+
+// Guards the CSP/inline-style interaction, which failed silently once: with a
+// policy enabled and the brand colour set through an inline `style` attribute,
+// the browser dropped the style and the heading rendered in the default ink
+// colour — green build, passing tests, no console error, wrong colours.
+//
+// This compares the *applied* colour against the `--color-brand` token rather
+// than a literal, so re-branding does not require editing the test, but any
+// future change that stops the token reaching the heading still fails it.
+test('the brand colour actually reaches the heading', async ({ page }) => {
+  const response = await page.goto('/');
+
+  // Assert the policy is actually in force first. Without this the colour
+  // check below would pass just as happily with CSP switched off, which is the
+  // one state it is supposed to detect — a guard that cannot fail is worse
+  // than no guard.
+  const header = response?.headers()['content-security-policy'];
+  const meta = await page
+    .locator('meta[http-equiv="content-security-policy"]')
+    .getAttribute('content')
+    .catch(() => null);
+  const policy = header ?? meta;
+  expect(policy, 'no CSP in force — this test would pass vacuously').toBeTruthy();
+  expect(policy).toContain("script-src 'self'");
+
+  const { applied, token } = await page.evaluate(() => ({
+    applied: getComputedStyle(document.querySelector('h1')!).color,
+    token: getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-brand')
+      .trim(),
+  }));
+
+  const [r, g, b] = token.replace('#', '').match(/../g)!.map((h) => parseInt(h, 16));
+  expect(applied).toBe(`rgb(${r}, ${g}, ${b})`);
+});

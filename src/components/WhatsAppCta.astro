@@ -11,10 +11,13 @@ interface Props {
 const { phone, message, label, variant = 'primary' } = Astro.props;
 const href = buildWhatsAppUrl(phone, message);
 
+// Colours live in the class string rather than an inline `style` attribute:
+// CSP blocks inline style attributes, and these are utilities generated from
+// the `@theme` tokens in global.css. See that file for why.
 const classes =
   variant === 'primary'
-    ? 'inline-block rounded-lg px-6 py-3 font-semibold text-white'
-    : 'inline-block rounded-lg border-2 px-6 py-3 font-semibold';
+    ? 'inline-block rounded-lg px-6 py-3 font-semibold text-white bg-cta'
+    : 'inline-block rounded-lg border-2 px-6 py-3 font-semibold border-brand text-brand';
 ---
 
 {
@@ -22,11 +25,6 @@ const classes =
     <a
       href={href}
       class={classes}
-      style={
-        variant === 'primary'
-          ? 'background-color: var(--color-cta)'
-          : 'border-color: var(--color-brand); color: var(--color-brand)'
-      }
       rel="noopener"
     >
       {label}

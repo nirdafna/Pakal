@@ -32,7 +32,30 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
 
-  adapter: useNodeAdapter ? node({ mode: 'standalone' }) : vercel(),
+  // Astro hashes its own inline scripts and styles and emits `script-src` /
+  // `style-src` from them. `script-src 'self' <hashes>` is the directive that
+  // matters here: it blocks `javascript:` URL navigation outright, so a bad
+  // link reaching an `href` is inert even if the validation in `src/lib/urls.ts`
+  // ever lets one through. Two locks, not one.
+  //
+  // No `default-src`: it would also govern `img-src` and `connect-src`, and
+  // images come from `cdn.sanity.io` while the Studio talks to `*.sanity.io`.
+  // Adding it without enumerating those would break both. `object-src` and
+  // `base-uri` are safe to pin because nothing here uses either.
+  //
+  // This only works because no inline `style` attributes remain — see
+  // `src/styles/global.css`. Reintroducing one silently drops it in the
+  // browser; `e2e/smoke.spec.ts` guards that.
+  security: {
+    csp: {
+      directives: ["object-src 'none'", "base-uri 'self'"],
+    },
+  },
+
+  // `staticHeaders` promotes the policy from a `<meta>` element to a real
+  // response header on prerendered routes. A header is enforced before any
+  // markup parses, and covers directives a meta tag cannot express.
+  adapter: useNodeAdapter ? node({ mode: 'standalone' }) : vercel({ staticHeaders: true }),
   integrations: [
     sanity({
       projectId: PUBLIC_SANITY_PROJECT_ID,

@@ -11,6 +11,13 @@ Gates before the site goes live on its real domain.
       `curl -sI https://<preview-url>/ | grep -iE 'x-content-type|referrer-policy|x-frame|permissions-policy|strict-transport'`
       and confirm all five are present. If they are missing, the file is inert and the fix is
       the adapter's own header mechanism, not a bigger `vercel.json`.
+- [ ] **Open `/studio` on a preview deploy and edit a document.** CSP is enforced there as a
+      real response header. Verified locally: the Studio's React app boots and renders under
+      the policy with no violations — but only its unconnected "add a CORS origin" screen,
+      because localhost is not a registered origin. Authenticated use (document editing, image
+      upload, which may want `blob:` workers) has NOT been exercised under CSP. If it breaks,
+      the fix is scoping the policy to exclude `/studio`; the public marketing pages are the
+      attack surface that matters.
 - [ ] **Revisit `Strict-Transport-Security: preload`** once the production domain is settled
       (spec §14). It is deliberately omitted today because preload submission is slow to undo.
 
