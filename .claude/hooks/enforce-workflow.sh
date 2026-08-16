@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 # PreToolUse guard for Bash commands in this repository.
 #
-# Two rules that were broken during the initial build and are now mechanical
-# rather than advisory, because instructions alone did not hold:
+# One rule, broken during the initial build and now mechanical rather than
+# advisory, because instructions alone did not hold:
 #
-#   1. Claude does not merge PRs. Nir merges. A clean review is not consent.
-#   2. Nothing commits directly to `main`. Branch protection enforces this on
+#   1. Nothing commits directly to `main`. Branch protection enforces this on
 #      the remote, but only since the repo became public — this catches the
 #      local commit before it is ever made, with a clearer message.
 #
-# Both deny at the harness level, so there is no judgement call left to make.
-# A human can still run either command themselves in their own shell.
+# It denies at the harness level, so there is no judgement call left to make.
+# A human can still run the command themselves in their own shell.
+#
+# This file used to carry a second rule — "Claude does not merge PRs" — which
+# moved to GitHub branch protection on 2026-08-16. The long note further down,
+# where that block used to sit, explains why a local hook was structurally the
+# wrong place for it. Do not restore it here.
 set -euo pipefail
 
 payload=$(cat)
