@@ -2,6 +2,18 @@
 
 Gates before the site goes live on its real domain.
 
+## Security headers
+
+- [ ] **Confirm the `vercel.json` headers are actually served.** They cannot be verified by a
+      local build: `@astrojs/vercel` writes its own build output with `headers: []`, and
+      Vercel applies `vercel.json` at the platform routing layer instead. On the first real
+      preview deploy run
+      `curl -sI https://<preview-url>/ | grep -iE 'x-content-type|referrer-policy|x-frame|permissions-policy|strict-transport'`
+      and confirm all five are present. If they are missing, the file is inert and the fix is
+      the adapter's own header mechanism, not a bigger `vercel.json`.
+- [ ] **Revisit `Strict-Transport-Security: preload`** once the production domain is settled
+      (spec §14). It is deliberately omitted today because preload submission is slow to undo.
+
 ## Content
 - [ ] No placeholder artwork anywhere in production (spec §15).
 - [ ] Real WhatsApp number set in `siteSettings.whatsappPhone`; every CTA opens the right
