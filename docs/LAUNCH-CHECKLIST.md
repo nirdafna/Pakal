@@ -11,6 +11,13 @@ Gates before the site goes live on its real domain.
       `curl -sI https://<preview-url>/ | grep -iE 'x-content-type|referrer-policy|x-frame|permissions-policy|strict-transport'`
       and confirm all five are present. If they are missing, the file is inert and the fix is
       the adapter's own header mechanism, not a bigger `vercel.json`.
+- [ ] **Confirm CSP reaches a real landmark page.** `/treks/[slug]` is server-rendered, so it
+      gets the policy from Astro's runtime rather than from the adapter's static headers. That
+      path was verified only by reading the compiled server bundle (`renderCspContent` is wired
+      to `content-security-policy`), never by an actual request — no `place` document was
+      published to hit. It is also the one page that renders `mapUrl`, which is the link CSP is
+      there to neutralise. Once a landmark is published:
+      `curl -s https://<url>/treks/<slug> | grep -i content-security-policy`.
 - [ ] **Open `/studio` on a preview deploy and edit a document.** CSP is enforced there as a
       real response header. Verified locally: the Studio's React app boots and renders under
       the policy with no violations — but only its unconnected "add a CORS origin" screen,
