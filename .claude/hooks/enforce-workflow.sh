@@ -27,11 +27,23 @@ deny() {
   exit 0
 }
 
-case "$cmd" in
-  *"gh pr merge"*)
-    deny "Blocked: merging is Nir's decision, not Claude's. Report the review outcome and hand over the PR URL so he can merge. See CLAUDE.md → Workflow gates."
-    ;;
-esac
+# The `gh pr merge` deny that used to sit here was removed on 2026-08-16, at
+# Nir's instruction, to match how edut-app works. It is not a loosening — the
+# gate moved somewhere this hook cannot reach and Claude cannot forge.
+#
+# It was replaced by branch protection on `main` with `enforce_admins: true`
+# and four required checks (changes, lint, typecheck, unit-tests). That gates
+# on GREEN CI rather than on WHO is merging, which matters because Claude runs
+# with Nir's GitHub credentials — same account, full `repo` scope. No
+# identity-based rule could ever have told the two apart, and a local hook can
+# only ever be a drift guard, since anything Claude can type it can type
+# unprompted.
+#
+# Consequence, deliberate: nobody bypasses, Nir included. A broken required
+# check blocks everyone until it is fixed or the ruleset is disabled.
+#
+# `e2e` is deliberately NOT a required check: it runs post-merge and nightly by
+# design, so requiring it would deadlock every PR.
 
 case "$cmd" in
   *"git commit"*)
