@@ -7,7 +7,7 @@ import WhatsAppCta from '../components/WhatsAppCta.astro';
 import { getPlaces, getSiteSettings } from '../lib/sanity/queries';
 
 const settings = await getSiteSettings();
-const places = (await getPlaces()).slice(0, 3);
+const places = await getPlaces(3);
 
 const heroTitle = settings?.heroTitle ?? 'פק"ל';
 const heroTagline = settings?.heroTagline ?? 'נהנים בכל דרך';
