@@ -136,3 +136,37 @@ static responses, but puts an edge function invocation in front of every request
 brochure site to set five constant headers. *Shipping CSP with `'unsafe-inline'` on
 `style-src`* — would have appeared to work while being silently inert, the exact failure mode
 this repo has already been bitten by twice.
+
+## 2026-08-16 — The merge gate moved from a local hook to GitHub branch protection
+
+`.claude/hooks/enforce-workflow.sh` used to deny `gh pr merge` outright, so every merge was
+Nir's to run by hand. That is replaced by branch protection on `main`: `enforce_admins: true`,
+no required reviews, and four required checks — `changes`, `lint`, `typecheck`, `unit-tests`.
+Claude may now merge a green PR. This matches how `edut-app` already worked.
+
+The reason is not convenience. The local hook could never have been more than a drift guard.
+Claude runs `gh` with Nir's own credentials — same account, full `repo` scope — so no rule
+that asks *who* is merging can tell the two apart, and any token or approval file the hook
+checked for is something Claude could type unprompted. An earlier proposal here was a
+`PKG`-style approval token in the command; it was rejected for exactly the laundering shape
+this repo has already found elsewhere, where an approval generalises past what was approved.
+
+`enforce_admins: true` sidesteps the identity problem entirely by gating on **green CI**
+instead of on identity. Neither Nir nor Claude can merge red, and the shared account stops
+mattering. Required reviews are deliberately left `null`: GitHub does not let an author
+approve their own PR, so on a single-maintainer repo that setting deadlocks the maintainer
+rather than constraining the agent.
+
+`e2e` is not a required check. It runs post-merge and nightly by design (see
+`.github/workflows/e2e.yml`), so requiring it would leave every PR waiting for a check that
+never reports. Docs-only PRs are safe because the heavy jobs gate on a job-level `if:` over
+the `changes` output rather than workflow-level `paths-ignore` — a skipped job still reports a
+check, where an unrun workflow would hang the PR forever.
+
+**Alternatives rejected:** *Keeping the hook and adding a `PAKAL_MERGE_APPROVED=1` token* —
+Claude types the token, so the hook cannot distinguish "Nir asked" from "Claude decided",
+which is the one distinction it exists to make. *Required approving reviews* — deadlocks a
+solo maintainer, per above. *A separate GitHub credential for Claude without merge rights* —
+the only true identity boundary available, and still the right answer if the CI gate ever
+proves insufficient; rejected for now as setup cost out of proportion to the risk on a
+brochure site.
