@@ -21,11 +21,19 @@ export async function getCardByNumber(number: number): Promise<CardLookup | null
   );
 }
 
-export async function getPlaces(): Promise<PlaceSummary[]> {
+/**
+ * `limit` slices in GROQ rather than in JS. The homepage shows three landmarks;
+ * without this it fetched the whole deck — title, summary and an image ref per
+ * place — and discarded all but three after the response had already crossed
+ * the wire. Harmless at today's row count, and it grows with the deck.
+ */
+export async function getPlaces(limit?: number): Promise<PlaceSummary[]> {
+  const slice = limit === undefined ? '' : '[0...$limit]';
   return sanityClient.fetch<PlaceSummary[]>(
-    `*[_type == "place" && defined(slug.current)] | order(title asc){
+    `*[_type == "place" && defined(slug.current)] | order(title asc)${slice}{
       title, "slug": slug.current, kind, region, summary, "image": images[0]
     }`,
+    limit === undefined ? {} : { limit },
   );
 }
 

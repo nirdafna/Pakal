@@ -11,6 +11,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PortableText from '../../components/PortableText.astro';
 import SanityImage from '../../components/SanityImage.astro';
 import { getPlaceBySlug } from '../../lib/sanity/queries';
+import { safeExternalUrl } from '../../lib/urls';
 
 const { slug } = Astro.params;
 
@@ -35,6 +36,12 @@ const facts = [
   place.difficulty && { label: 'רמת קושי', value: place.difficulty },
   place.season && { label: 'עונה מומלצת', value: place.season },
 ].filter(Boolean) as { label: string; value: string }[];
+
+// Never rendered straight from the CMS: `type: 'url'` in the Studio schema does
+// not bind a raw API write, and an unchecked `href` is a live `javascript:`
+// link rather than the 500 an unchecked slug would cause. Same distrust as
+// `resolveCardPath`, different failure mode.
+const mapUrl = safeExternalUrl(place.mapUrl);
 ---
 
 <BaseLayout title={`${place.title} — פק"ל`} description={place.summary}>
@@ -71,9 +78,9 @@ const facts = [
     }
 
     {
-      place.mapUrl && (
+      mapUrl && (
         <p class="mt-8">
-          <a class="underline" href={place.mapUrl} rel="noopener noreferrer" target="_blank">
+          <a class="underline" href={mapUrl} rel="noopener noreferrer" target="_blank">
             פתיחת המיקום במפה
           </a>
         </p>
