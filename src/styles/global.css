@@ -21,7 +21,10 @@
   --color-brand: #00306d;
   --color-accent: #c8322e;
   --color-cta: #5f7d35;
-  --color-sand: #f4efe6;
+  /* Warmer and deeper than the near-white it replaced: the page ground reads
+     as desert rather than as unpainted paper, and white cards separate from it
+     without needing a border. Contrast against ink stays at 10.3:1. */
+  --color-sand: #ebe1cf;
   --color-ink: #24303f;
   --font-hebrew: 'Assistant Variable', system-ui, sans-serif;
 }
