@@ -121,3 +121,14 @@ html {
   padding-inline-start: 1rem;
   font-style: italic;
 }
+
+/* The disclosure triangle on the phone menu. `list-style: none` alone does not
+   remove it in WebKit, which draws it through a pseudo-element instead. */
+summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
