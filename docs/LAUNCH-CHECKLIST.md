@@ -60,14 +60,22 @@ Gates before the site goes live on its real domain.
 - [ ] Vercel plan appropriate for commercial use, on the account that will own the site.
 - [x] Vercel deploy hook `sanity-publish` created and proven — triggering it manually
       produced a production deployment (2026-08-22, 12:47 UTC).
-- [ ] **Sanity webhook `vercel-rebuild` is NOT firing.** Created 2026-08-22, and a Studio
-      publish at 12:59:30 UTC produced no deployment in the following five minutes while the
-      deploy hook it points at was already proven working. So the break is on the Sanity
-      side — delivery, filter, or trigger configuration — not in Vercel. Check the webhook's
-      attempt log at sanity.io/manage → API → Webhooks → `vercel-rebuild`. Until this is
-      fixed, a content publish does not reach the prerendered pages (homepage, `/treks`
-      index) until someone redeploys by hand; `/c/[id]` and `/treks/[slug]` are unaffected,
-      being server-rendered.
+- [ ] **Sanity webhook `vercel-rebuild` is NOT firing — root cause known.** Its rule is
+      `{"on":["create"]}`. Publishing an edit to an existing document is an **update**, so no
+      event ever matches and the attempt log stays empty — Sanity never calls out at all. Two
+      Studio publishes (12:59:30 and 13:18:35 UTC) produced zero deployments, while the deploy
+      hook they point at was independently proven working at 12:47 UTC.
+
+      The fix is to **recreate** the webhook with Create, Update *and* Delete ticked; editing
+      the existing one did not persist the change across two attempts. Delete matters as much
+      as update — unpublishing a landmark must also rebuild, or the homepage keeps linking to
+      a page that now redirects away.
+
+      Verify by reading `rule.on` at
+      `https://api.sanity.io/v2021-10-04/hooks/projects/6203ycx6`, not by trusting the form.
+      Until this is fixed, a content publish does not reach the prerendered pages (homepage,
+      `/treks` index) until someone redeploys by hand; `/c/[id]` and `/treks/[slug]` are
+      unaffected, being server-rendered.
 - [ ] `Tests` workflow (`.github/workflows/test.yml`) green on `main`.
 - [ ] `E2E Tests` workflow (`.github/workflows/e2e.yml`) green on `main`.
 
