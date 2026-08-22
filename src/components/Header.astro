@@ -1,4 +1,6 @@
 ---
+import Wordmark from './Wordmark.astro';
+
 const links = [
   { href: '/', label: 'דף הבית' },
   { href: '/treks', label: 'המסלולים שבחפיסה' },
@@ -8,19 +10,36 @@ const links = [
 ];
 
 const currentPath = Astro.url.pathname;
+
+const linkClass = (href: string) =>
+  currentPath === href
+    ? 'underline decoration-cta decoration-2 underline-offset-8'
+    : 'hover:underline';
 ---
 
+<!--
+  The link list is defined once above and rendered twice: a row for wide screens
+  and a `details` disclosure for phones. One markup that adapts would be
+  preferable, but a `details` element hides its own contents when closed, and
+  forcing it open from CSS so the same list could stay visible on desktop is not
+  reliable across browsers. Only one of the two is ever displayed.
+
+  `details`/`summary` rather than a scripted menu: no JavaScript, so nothing to
+  block under the site's CSP and nothing to load on a phone with bad reception.
+  This header is the first thing a stranger sees after scanning a printed card.
+-->
 <header class="border-b border-black/10">
-  <nav class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-4" aria-label="ניווט ראשי">
-    <a href="/" class="text-2xl font-bold text-brand">פק"ל</a>
-    <ul class="flex flex-wrap gap-4 text-sm">
+  <nav class="relative mx-auto flex max-w-6xl items-center gap-6 px-4 py-4" aria-label="ניווט ראשי">
+    <a href="/" class="shrink-0" aria-label='פק"ל — דף הבית'><Wordmark size="sm" /></a>
+
+    <ul class="hidden flex-wrap gap-4 text-sm sm:flex">
       {
         links.map((link) => (
           <li>
             <a
               href={link.href}
               aria-current={currentPath === link.href ? 'page' : undefined}
-              class="hover:underline"
+              class={linkClass(link.href)}
             >
               {link.label}
             </a>
@@ -28,6 +47,33 @@ const currentPath = Astro.url.pathname;
         ))
       }
     </ul>
-    <span class="ms-auto text-xs opacity-70">מיוצר ומפותח בישראל</span>
+
+    <span class="ms-auto hidden text-xs opacity-70 sm:inline">מיוצר ומפותח בישראל</span>
+
+    <details class="ms-auto sm:hidden">
+      <summary
+        class="rounded-lg border border-brand/40 px-3 py-2 text-sm font-semibold text-brand"
+      >
+        תפריט
+      </summary>
+      <ul
+        class="absolute inset-x-0 top-full z-10 flex flex-col gap-3 border-b border-black/10 bg-sand px-4 py-4 text-sm shadow-lg"
+      >
+        {
+          links.map((link) => (
+            <li>
+              <a
+                href={link.href}
+                aria-current={currentPath === link.href ? 'page' : undefined}
+                class={linkClass(link.href)}
+              >
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+        <li class="pt-2 text-xs opacity-70">מיוצר ומפותח בישראל</li>
+      </ul>
+    </details>
   </nav>
 </header>
