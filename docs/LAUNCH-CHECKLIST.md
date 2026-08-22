@@ -60,22 +60,21 @@ Gates before the site goes live on its real domain.
 - [ ] Vercel plan appropriate for commercial use, on the account that will own the site.
 - [x] Vercel deploy hook `sanity-publish` created and proven — triggering it manually
       produced a production deployment (2026-08-22, 12:47 UTC).
-- [ ] **Sanity webhook `vercel-rebuild` is NOT firing — root cause known.** Its rule is
-      `{"on":["create"]}`. Publishing an edit to an existing document is an **update**, so no
-      event ever matches and the attempt log stays empty — Sanity never calls out at all. Two
-      Studio publishes (12:59:30 and 13:18:35 UTC) produced zero deployments, while the deploy
-      hook they point at was independently proven working at 12:47 UTC.
+- [x] **Sanity webhook `vercel-rebuild` verified end to end** (2026-08-22). A Studio publish
+      produces a production deployment, and the rebuilt site carries the new content to the
+      prerendered pages.
 
-      The fix is to **recreate** the webhook with Create, Update *and* Delete ticked; editing
-      the existing one did not persist the change across two attempts. Delete matters as much
-      as update — unpublishing a landmark must also rebuild, or the homepage keeps linking to
-      a page that now redirects away.
+      It did not work when first created: the rule was `{"on":["create"]}`, and publishing an
+      edit to an existing document is an **update**, so no event ever matched and the attempt
+      log stayed empty — Sanity never called out at all. Note the signature, because it reads
+      like a delivery failure and sends you to check the URL: **empty attempts means no event
+      matched; a bad URL produces attempts with a non-2xx `resultCode`.**
 
-      Verify by reading `rule.on` at
-      `https://api.sanity.io/v2021-10-04/hooks/projects/6203ycx6`, not by trusting the form.
-      Until this is fixed, a content publish does not reach the prerendered pages (homepage,
-      `/treks` index) until someone redeploys by hand; `/c/[id]` and `/treks/[slug]` are
-      unaffected, being server-rendered.
+      Editing the existing webhook to add the missing triggers did not persist, twice.
+      Recreating it did. Verify by reading `rule.on` at
+      `https://api.sanity.io/v2021-10-04/hooks/projects/6203ycx6` rather than trusting the
+      form, and confirm delivery at that hook id's `/attempts` — a healthy call returns
+      `resultCode: 201` with a queued Vercel job.
 - [ ] `Tests` workflow (`.github/workflows/test.yml`) green on `main`.
 - [ ] `E2E Tests` workflow (`.github/workflows/e2e.yml`) green on `main`.
 

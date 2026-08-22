@@ -9,8 +9,11 @@ correct. Delete items as they land.
 - [x] **Vercel environment variables.** Already set on Production and Preview since
       2026-08-15 — the claim that every build was failing was stale. **Development is still
       missing**; see the launch checklist.
-- [x] **Vercel deploy hook `sanity-publish` created and proven** — triggering it manually
-      produced a production deployment on 2026-08-22 at 12:47 UTC.
+- [x] **Publish webhook working, verified end to end** — Sanity webhook `vercel-rebuild` →
+      Vercel deploy hook `sanity-publish` → production rebuild → new content live on the
+      prerendered pages. Filtered to `_type in ["place", "page", "siteSettings"]`; `card` is
+      deliberately excluded because card→landmark links are read live by `/c/[id]` and need
+      no rebuild. See the launch checklist for the failure mode it shipped with.
 - [x] **The unproven third of the codebase has now executed.** A `place` was published with
       an image and Portable Text body, attached to card 1, and requested against production:
       `getPlaceBySlug`, `urlFor`, `SanityImage` (srcset 1x/2x, `auto=format`), `PortableText`
