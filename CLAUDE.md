@@ -35,15 +35,20 @@ Full reasoning: `docs/superpowers/specs/2026-08-15-pakal-site-design.md` §7 and
 2. **Quality gates run pre-PR, on the branch**, so CI runs once on reviewed code:
    simplify pass → code review → **security review whenever the diff touches a public
    endpoint** (`/c/[id]` is one) → then open the PR.
-3. **Merge once CI is green.** Branch protection on `main` is the gate: `enforce_admins: true`
-   with `changes`, `lint`, `typecheck` and `unit-tests` required. Nobody bypasses it, Nir
+3. **Never merge unless Nir says "merge".** Green CI is necessary and not sufficient. Open
+   the PR, report the review outcome with the PR URL, and stop. Announcing an intention to
+   merge is not approval, and silence after it is not approval — wait for the word.
+
+   Branch protection on `main` is a floor, not the gate: `enforce_admins: true` with
+   `changes`, `lint`, `typecheck` and `unit-tests` required, so nobody merges red, Nir
    included. `e2e` is deliberately not required — it runs post-merge and nightly, so requiring
-   it would deadlock every PR. Report the review outcome with the PR URL either way.
-   Until 2026-08-16 this rule read "Claude does not merge, Nir merges" and was enforced by a
-   local hook. That was a drift guard, not a boundary: Claude runs with Nir's GitHub
-   credentials, so no identity-based rule could tell them apart, and anything the hook checked
-   for, Claude could type unprompted. Gating on green CI instead of on who is merging is the
-   thing that actually holds. See `docs/DECISIONS.md`, 2026-08-16.
+   it would deadlock every PR.
+
+   This rule was widened on 2026-08-16 into "merge once CI is green" and that was wrong. Nir
+   had said, twice and eleven minutes earlier, *"you can merge only when i say merge not
+   without it"*. What he asked to remove was the local **hook** — the mechanism — in favour of
+   the `edut-app` model; the approval requirement was never withdrawn. Replacing a mechanism
+   is not permission to drop the policy it enforced. See `docs/DECISIONS.md`, 2026-08-22.
 4. **Escalate, never self-authorize.** If a supply-chain or permission gate blocks
    something, report it. Never use `PKG_SECURITY_OVERRIDE`. When a package is blocked by
    the registry cooldown, pin to an older release that clears it — that pattern is already
@@ -51,8 +56,12 @@ Full reasoning: `docs/superpowers/specs/2026-08-15-pakal-site-design.md` §7 and
 5. **No new dependencies without asking first**, including anything that only adds a line
    to `package.json`.
 
-Rule 1 is enforced mechanically by `.claude/hooks/enforce-workflow.sh`, rule 3 by GitHub
-branch protection. The rest depend on you actually following them.
+Rule 1 is enforced mechanically by `.claude/hooks/enforce-workflow.sh`. Branch protection
+enforces only the *green CI* half of rule 3 — **nothing mechanical enforces the approval
+half**, because Claude runs `gh` with Nir's credentials and no identity check can separate
+them. That is a reason to hold the rule more carefully, not a reason to drop it: the 2026-08-16
+rewrite used exactly that unenforceability as grounds for widening the rule, which inverts it.
+The rest depend on you actually following them.
 
 ## Code constraints
 
