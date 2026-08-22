@@ -4,27 +4,24 @@ Gates before the site goes live on its real domain.
 
 ## Security headers
 
-- [ ] **Confirm the `vercel.json` headers are actually served.** They cannot be verified by a
-      local build: `@astrojs/vercel` writes its own build output with `headers: []`, and
-      Vercel applies `vercel.json` at the platform routing layer instead. On the first real
-      preview deploy run
-      `curl -sI https://<preview-url>/ | grep -iE 'x-content-type|referrer-policy|x-frame|permissions-policy|strict-transport'`
-      and confirm all five are present. If they are missing, the file is inert and the fix is
-      the adapter's own header mechanism, not a bigger `vercel.json`.
-- [ ] **Confirm CSP reaches a real landmark page.** `/treks/[slug]` is server-rendered, so it
-      gets the policy from Astro's runtime rather than from the adapter's static headers. That
-      path was verified only by reading the compiled server bundle (`renderCspContent` is wired
-      to `content-security-policy`), never by an actual request — no `place` document was
-      published to hit. It is also the one page that renders `mapUrl`, which is the link CSP is
-      there to neutralise. Once a landmark is published:
-      `curl -s https://<url>/treks/<slug> | grep -i content-security-policy`.
-- [ ] **Open `/studio` on a preview deploy and edit a document.** CSP is enforced there as a
-      real response header. Verified locally: the Studio's React app boots and renders under
-      the policy with no violations — but only its unconnected "add a CORS origin" screen,
-      because localhost is not a registered origin. Authenticated use (document editing, image
-      upload, which may want `blob:` workers) has NOT been exercised under CSP. If it breaks,
-      the fix is scoping the policy to exclude `/studio`; the public marketing pages are the
-      attack surface that matters.
+- [x] **`vercel.json` headers are served.** Confirmed 2026-08-22 against production
+      (`https://pakal-kappa.vercel.app/`): all five present — `x-content-type-options`,
+      `referrer-policy`, `x-frame-options`, `permissions-policy`,
+      `strict-transport-security`. The file is not inert. This could never be checked from a
+      local build: `@astrojs/vercel` writes its own output with `headers: []` and Vercel
+      applies `vercel.json` at the routing layer, so re-check with `curl -sI` after any
+      change to that file rather than trusting a build.
+- [x] **CSP reaches a real landmark page.** Confirmed 2026-08-22 on `/treks/ein-gedi`, a
+      server-rendered route getting its policy from Astro's runtime rather than the adapter's
+      static headers. It is also the one page rendering `mapUrl`, which is what CSP is there
+      to neutralise. Previously verified only by reading the compiled server bundle, because
+      no `place` existed to request.
+- [ ] **Edit a document in `/studio` under CSP.** Still open. The Studio boots and renders
+      under the policy, and its production origin is now registered with Sanity — but
+      **authenticated** use (document editing, image upload, which may want `blob:` workers)
+      has still not been exercised against the live policy. If it breaks, the fix is scoping
+      the policy to exclude `/studio`; the public marketing pages are the attack surface that
+      matters.
 - [ ] **Revisit `Strict-Transport-Security: preload`** once the production domain is settled
       (spec §14). It is deliberately omitted today because preload submission is slow to undo.
 
@@ -43,23 +40,42 @@ Gates before the site goes live on its real domain.
       served at `/treks/[slug]`).
 
 ## Cards and QR
-- [ ] Deck size confirmed and `scripts/seed-cards.ts` run for the full deck (never run as of
-      this writing — deck size still unknown).
+- [ ] **Deck size confirmed and `scripts/seed-cards.ts` run for the full deck.** Ten cards
+      were seeded 2026-08-22 as a proving batch; the real deck size is still unknown. The
+      script is idempotent and additive, so re-running it with the true count is safe.
 - [ ] Domain final and added in Vercel, DNS verified.
 - [ ] A physical scan test: scan a printed card with two phones on mobile data.
-- [ ] `/c/<n>` for an unlinked card lands on the homepage, not an error.
+- [x] **`/c/<n>` never dead-ends.** Verified live 2026-08-22 against production: `/c/1`
+      (attached) → 302 `/treks/ein-gedi`; `/c/2` (seeded, unattached) → 302 `/`; `/c/99999`
+      (out of deck range) → 302 `/`; `/c/abc` (malformed) → 302 `/`. No 404, no 500 on any
+      path. Re-run these four after any change to `/c/[id]` or `resolveCardPath`.
 
 ## Platform
-- [x] Repository imported into Vercel — project `pakal` under team `pakal` (confirmed live
-      while writing this checklist: the Vercel GitHub integration is active and attempts a
-      preview build on every PR).
-- [ ] `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` set on all three Vercel
-      environments. **Not yet done** — confirmed live while writing this checklist, every
-      Vercel preview build currently fails for exactly this reason.
+- [x] Repository imported into Vercel — project `pakal` under team `pakal`, production live
+      at `https://pakal-kappa.vercel.app` serving current `main`.
+- [ ] **`PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` on all three environments.**
+      Set on **Production and Preview** (2026-08-15); **Development is still missing**. That
+      last one affects `vercel dev` and `vercel env pull` only, not deployed builds — which
+      is why builds have been green while this stayed unticked.
 - [ ] Vercel plan appropriate for commercial use, on the account that will own the site.
-- [ ] Vercel deploy hook `sanity-publish` and Sanity webhook `vercel-rebuild` created (not
-      yet done as of this writing — see `docs/DEPLOYMENT.md`).
-- [ ] Sanity webhook `vercel-rebuild` verified: publish a content edit, confirm a rebuild.
+- [x] Vercel deploy hook `sanity-publish` created and proven — triggering it manually
+      produced a production deployment (2026-08-22, 12:47 UTC).
+- [ ] **Sanity webhook `vercel-rebuild` is NOT firing — root cause known.** Its rule is
+      `{"on":["create"]}`. Publishing an edit to an existing document is an **update**, so no
+      event ever matches and the attempt log stays empty — Sanity never calls out at all. Two
+      Studio publishes (12:59:30 and 13:18:35 UTC) produced zero deployments, while the deploy
+      hook they point at was independently proven working at 12:47 UTC.
+
+      The fix is to **recreate** the webhook with Create, Update *and* Delete ticked; editing
+      the existing one did not persist the change across two attempts. Delete matters as much
+      as update — unpublishing a landmark must also rebuild, or the homepage keeps linking to
+      a page that now redirects away.
+
+      Verify by reading `rule.on` at
+      `https://api.sanity.io/v2021-10-04/hooks/projects/6203ycx6`, not by trusting the form.
+      Until this is fixed, a content publish does not reach the prerendered pages (homepage,
+      `/treks` index) until someone redeploys by hand; `/c/[id]` and `/treks/[slug]` are
+      unaffected, being server-rendered.
 - [ ] `Tests` workflow (`.github/workflows/test.yml`) green on `main`.
 - [ ] `E2E Tests` workflow (`.github/workflows/e2e.yml`) green on `main`.
 

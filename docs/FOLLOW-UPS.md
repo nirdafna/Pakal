@@ -4,37 +4,38 @@ Open items at the end of the initial build (2026-08-15). Everything here was fou
 and deliberately deferred — none of it is unknown, and none of it blocks the code being
 correct. Delete items as they land.
 
-## Blocking a working deployment
+## Resolved 2026-08-22
 
-- [ ] **Set the Vercel environment variables.** `PUBLIC_SANITY_PROJECT_ID=6203ycx6` and
-      `PUBLIC_SANITY_DATASET=production`, on **Production, Preview and Development**. Every
-      Vercel build currently fails without them: the Sanity integration initializes with
-      `projectId: undefined` and throws. Missing them on Preview alone breaks every PR
-      preview while production looks fine.
-- [ ] **Wire the publish webhook.** Vercel → Settings → Git → Deploy Hooks → create
-      `sanity-publish` on `main`; then sanity.io/manage → API → Webhooks → point at it,
-      filtered to `_type in ["place", "page", "siteSettings"]`. Excluding `card` is
-      deliberate: card→landmark links are read live by `/c/[id]` and need no rebuild.
+- [x] **Vercel environment variables.** Already set on Production and Preview since
+      2026-08-15 — the claim that every build was failing was stale. **Development is still
+      missing**; see the launch checklist.
+- [x] **Vercel deploy hook `sanity-publish` created and proven** — triggering it manually
+      produced a production deployment on 2026-08-22 at 12:47 UTC.
+- [x] **The unproven third of the codebase has now executed.** A `place` was published with
+      an image and Portable Text body, attached to card 1, and requested against production:
+      `getPlaceBySlug`, `urlFor`, `SanityImage` (srcset 1x/2x, `auto=format`), `PortableText`
+      and the whole `/treks/[slug]` page all rendered. `safeExternalUrl` passed a real
+      `mapUrl` through, and `5 ק"מ` rendered with `bidi-isolate`.
+- [x] **The full printed-QR chain, live.** `/c/1` → `/treks/ein-gedi`, `/c/2` (unattached) →
+      `/`, `/c/99999` → `/`, `/c/abc` → `/`. Details in the launch checklist.
 
-## Unproven, not merely untested
+      This also demonstrated the prerender/server-render split doing its job: immediately
+      after publishing, `/c/1` and `/treks/ein-gedi` were correct while the prerendered
+      homepage and `/treks` index still listed zero landmarks until a rebuild ran. The scan
+      path — the one a stranger with a card hits — never went stale.
 
-The site has never rendered real content anywhere. Until a `place` is published, roughly a
-third of the codebase has never executed: `getPlaceBySlug` against real data, `urlFor`,
-`PortableText`, and the whole `/treks/[slug]` page.
+## Still open from the initial build
 
-- [ ] **Publish one `place` and one `siteSettings` in `/studio`**, then walk the full chain:
-      seed a small deck with `scripts/seed-cards.ts`, attach card 1, scan `/c/1`.
-- [ ] **Tighten the smoke test.** `e2e/smoke.spec.ts` currently accepts
-      `'/' || startsWith('/treks/')`, which the empty-CMS state satisfies via the `'/'`
-      branch. Once content exists, require `/treks/`. Add the spec §12 test that a landmark
-      page renders title, body and image — the plan dropped it and nothing caught that until
-      the final review.
-- [ ] **Confirm the wa.me test stops reporting `skipped`.** It skips while no CTA renders,
-      and cannot distinguish "not published yet" from "published but the CTA broke".
-- [ ] **Check no published slug falls outside `^[a-z0-9-]+$`.** `resolveCardPath` now
-      rejects non-matching slugs and routes home rather than risk a 500. A legitimately
-      published place with an uppercase or non-ASCII slug would silently redirect home on
-      every scan.
+- [ ] **Tighten the smoke test.** `e2e/smoke.spec.ts` accepts `'/' || startsWith('/treks/')`,
+      which the empty-CMS state satisfies via the `'/'` branch. Content now exists, so this
+      can require `/treks/`. Add the spec §12 test that a landmark page renders title, body
+      and image — the plan dropped it and nothing caught that until the final review.
+- [ ] **Confirm the wa.me test stops reporting `skipped`.** Still skipping: no `siteSettings`
+      document exists yet, so no CTA renders. It cannot distinguish "not published yet" from
+      "published but the CTA broke".
+- [ ] **Check no published slug falls outside `^[a-z0-9-]+$`.** `resolveCardPath` rejects
+      non-matching slugs and routes home rather than risk a 500. A legitimately published
+      place with an uppercase or non-ASCII slug would silently redirect home on every scan.
 
 ## Before the next print run — hard gates
 
