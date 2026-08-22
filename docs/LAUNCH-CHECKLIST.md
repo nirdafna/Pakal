@@ -80,4 +80,7 @@ Gates before the site goes live on its real domain.
 
 ## Handoff to Aviv
 - [ ] Walked him through publishing a landmark and attaching it to a card, live.
-- [ ] He has his own Sanity login with Editor access.
+- [ ] He has his own Sanity login with Editor access — invite from sanity.io/manage with the
+      **Editor** role, not Administrator: Editor publishes content but cannot change datasets,
+      tokens or project settings.
+- [x] Written guide exists — `docs/CONTENT-GUIDE-HE.md`, in Hebrew.

@@ -74,9 +74,10 @@ correct. Delete items as they land.
 
 ## Process
 
-- [ ] **A content guide for Aviv**, in Hebrew. The spec names "Aviv abandons the Studio" as the
-      top human risk, and a Studio action can currently take production down (two places
-      sharing a slug). One page: publish the place before attaching the card, never reuse a
-      slug, what to do if a card leads home.
+- [x] **A content guide for Aviv** — `docs/CONTENT-GUIDE-HE.md`, in Hebrew (2026-08-22).
+      Covers publishing a landmark, attaching a card, and the two Studio actions that can
+      break production: two places sharing a slug, and deleting a place a card points at.
+      Also states plainly that a card leading home is designed behaviour, not a fault, so
+      the first one he sees does not read as the site being broken.
 - [ ] **Deploy-failure alerting.** A failed build no longer means only "content is stale" — it
       means the live build may not contain landmarks that published cards point at.
