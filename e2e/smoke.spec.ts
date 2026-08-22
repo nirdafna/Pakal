@@ -85,3 +85,48 @@ test('the brand colour actually reaches the heading', async ({ page }) => {
   const [r, g, b] = token.replace('#', '').match(/../g)!.map((h) => parseInt(h, 16));
   expect(applied).toBe(`rgb(${r}, ${g}, ${b})`);
 });
+
+// Guards `.prose-pakal`, which `PortableText.astro` puts on every CMS body and
+// which was referenced without ever being defined. Tailwind's preflight strips
+// heading sizes and list markers, so the class being absent is invisible in a
+// build and in every unit test — it shows up only as rendered text that has
+// lost its structure.
+//
+// Both assertions are chosen to fail in the unstyled state: with preflight and
+// no rules, an `h2` computes to the same size as a `p`, and `ul` computes to
+// `list-style-type: none`.
+test('CMS body copy keeps its heading hierarchy and list markers', async ({ page }) => {
+  await page.goto('/how-to-play');
+  const prose = page.locator('.prose-pakal');
+
+  // The page falls back to "התוכן בהכנה" outside the prose wrapper when no
+  // `page` document is published, and there would then be nothing to style.
+  // Skipping keeps that state visible in the report instead of passing green.
+  test.skip((await prose.count()) === 0, 'no how-to-play body published — nothing to style');
+
+  const computed = await page.evaluate(() => {
+    const root = document.querySelector('.prose-pakal')!;
+    const heading = root.querySelector('h2');
+    const para = root.querySelector('p');
+    const list = root.querySelector('ul');
+    return {
+      headingSize: heading ? parseFloat(getComputedStyle(heading).fontSize) : null,
+      paraSize: para ? parseFloat(getComputedStyle(para).fontSize) : null,
+      listStyle: list ? getComputedStyle(list).listStyleType : null,
+      // In an RTL document `padding-inline-start` resolves to `padding-right`.
+      // A `padding-left` written by hand would leave this at 0 and put the
+      // markers on the wrong side — the exact mistake the repo bans logical
+      // properties to prevent.
+      listPadStart: list ? parseFloat(getComputedStyle(list).paddingRight) : null,
+    };
+  });
+
+  expect(computed.headingSize, 'no h2 in the rendered body').not.toBeNull();
+  expect(computed.paraSize, 'no p in the rendered body').not.toBeNull();
+  expect(computed.headingSize!).toBeGreaterThan(computed.paraSize!);
+
+  if (computed.listStyle !== null) {
+    expect(computed.listStyle).not.toBe('none');
+    expect(computed.listPadStart!).toBeGreaterThan(0);
+  }
+});
