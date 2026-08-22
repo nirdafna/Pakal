@@ -208,3 +208,35 @@ use under CSP is untested and is on the launch checklist.
 silently break the page until someone regenerated a hash. *Shipping CSP with `'unsafe-inline'`
 on `style-src`* — inert in the presence of hashes, so it would have looked like a policy while
 enforcing nothing.
+
+## 2026-08-22 — Vercel CLI installed globally, pinned, not added to `package.json`
+
+The CLI is needed to inspect deployments, environment variables and build state from a
+session. It was installed **globally** (`npm install -g vercel@59.1.3`) rather than as a
+devDependency: it is a developer tool, not a build input, and in `package.json` it would make
+every CI `npm ci` download roughly 50 MB and 287 packages that no job ever runs. The repo
+lockfile is untouched.
+
+The version is pinned because the registry cooldown guard blocked `59.4.0` — published the
+same day, against a 7-day threshold. Per the repo rule, the response to a cooldown block is to
+pin to an older release that clears it, never `PKG_SECURITY_OVERRIDE`. Same pattern already
+used for five packages here.
+
+**Alternatives rejected:** *devDependency* — CI cost with no CI use. *`PKG_SECURITY_OVERRIDE`*
+— the guard exists precisely to make same-day supply-chain compromises expensive to reach, and
+waiting a week costs nothing here.
+
+## 2026-08-22 — The Studio's production origin is registered with Sanity; preview origins are not
+
+`/studio` shows a "Connect this Studio to your project" screen on any origin not registered
+with the Sanity project. The production hostname was registered through the Studio's own
+**Register Studio** action, which adds the CORS origin *and* uploads the schema manifest.
+
+Per-PR preview deploys are deliberately **not** registered. Each preview URL is a distinct
+origin and every registration is a permanent entry on the project, so registering disposable
+URLs would accumulate stale grants forever in exchange for a Studio nobody edits in. The
+consequence — that Studio is only usable on the production origin — is intended.
+
+**Alternatives rejected:** *"Add CORS origin" instead of "Register Studio"* — skips the schema
+manifest, which schema-aware Studio features read. *Registering a wildcard origin* — would
+grant every future preview URL, and anything else on `*.vercel.app`, authenticated access.
