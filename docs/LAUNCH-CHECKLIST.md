@@ -27,14 +27,14 @@ Gates before the site goes live on its real domain.
 
 ## Content
 - [ ] No placeholder artwork anywhere in production (spec §15).
-- [ ] Real WhatsApp number set in `siteSettings.whatsappPhone`; every CTA opens the right
-      chat.
-- [ ] **Confirm the e2e run stops reporting `1 skipped`.** As of this writing the suite
-      reports 5 passed, 1 skipped — the skip is `e2e/smoke.spec.ts`'s "every WhatsApp link is
-      a valid wa.me URL" test, which skips itself while no CTA is rendered. It cannot tell
-      "not published yet" from "published but the CTA template broke" — both produce zero
-      links in the DOM. Once `whatsappPhone` is published, that test must show as *passed*;
-      if it still skips, the CTA is not rendering and that is a bug.
+- [x] **Real WhatsApp number set** in `siteSettings.whatsappPhone` (2026-08-22):
+      `972546699435`. The purchase CTA renders and resolves to
+      `https://wa.me/972546699435` with the Hebrew enquiry text attached.
+- [x] **The e2e run no longer reports a skip.** 11 passed, 0 skipped as of 2026-08-22. The
+      skip was `e2e/smoke.spec.ts`'s "every WhatsApp link is a valid wa.me URL", which skipped
+      itself while no CTA rendered and so could not tell "not published yet" from "published
+      but the CTA template broke" — both produce zero links in the DOM. It now asserts against
+      a real link. If it ever reports `skipped` again, the CTA has stopped rendering.
 - [ ] `how-to-play`, `corporate`, `faq` pages hold real copy, not fallback text.
 - [ ] At least the launch set of landmark pages is published (Sanity `place` documents,
       served at `/treks/[slug]`).

@@ -33,9 +33,9 @@ correct. Delete items as they land.
       which the empty-CMS state satisfies via the `'/'` branch. Content now exists, so this
       can require `/treks/`. Add the spec §12 test that a landmark page renders title, body
       and image — the plan dropped it and nothing caught that until the final review.
-- [ ] **Confirm the wa.me test stops reporting `skipped`.** Still skipping: no `siteSettings`
-      document exists yet, so no CTA renders. It cannot distinguish "not published yet" from
-      "published but the CTA broke".
+- [x] **The wa.me test asserts rather than skips** (2026-08-22). `siteSettings` is published
+      with the real number, the purchase CTA renders, and the full suite runs 11 passed, 0
+      skipped.
 - [ ] **Check no published slug falls outside `^[a-z0-9-]+$`.** `resolveCardPath` rejects
       non-matching slugs and routes home rather than risk a 500. A legitimately published
       place with an uppercase or non-ASCII slug would silently redirect home on every scan.
