@@ -58,10 +58,16 @@ Gates before the site goes live on its real domain.
       last one affects `vercel dev` and `vercel env pull` only, not deployed builds — which
       is why builds have been green while this stayed unticked.
 - [ ] Vercel plan appropriate for commercial use, on the account that will own the site.
-- [x] Vercel deploy hook `sanity-publish` and Sanity webhook `vercel-rebuild` created
-      (2026-08-22).
-- [ ] **Sanity webhook `vercel-rebuild` verified end to end** — publish a content edit from
-      the Studio, confirm a deployment fires. Creating the hook is not evidence it works.
+- [x] Vercel deploy hook `sanity-publish` created and proven — triggering it manually
+      produced a production deployment (2026-08-22, 12:47 UTC).
+- [ ] **Sanity webhook `vercel-rebuild` is NOT firing.** Created 2026-08-22, and a Studio
+      publish at 12:59:30 UTC produced no deployment in the following five minutes while the
+      deploy hook it points at was already proven working. So the break is on the Sanity
+      side — delivery, filter, or trigger configuration — not in Vercel. Check the webhook's
+      attempt log at sanity.io/manage → API → Webhooks → `vercel-rebuild`. Until this is
+      fixed, a content publish does not reach the prerendered pages (homepage, `/treks`
+      index) until someone redeploys by hand; `/c/[id]` and `/treks/[slug]` are unaffected,
+      being server-rendered.
 - [ ] `Tests` workflow (`.github/workflows/test.yml`) green on `main`.
 - [ ] `E2E Tests` workflow (`.github/workflows/e2e.yml`) green on `main`.
 
