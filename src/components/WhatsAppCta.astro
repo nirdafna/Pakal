@@ -6,15 +6,17 @@ interface Props {
   message: string;
   label: string;
   variant?: 'primary' | 'outline';
+  /** Renders the mockup's shopping-bag glyph before the label. */
+  icon?: 'bag';
 }
 
-const { phone, message, label, variant = 'primary' } = Astro.props;
+const { phone, message, label, variant = 'primary', icon } = Astro.props;
 const href = buildWhatsAppUrl(phone, message);
 
 // Colours live in the class string rather than an inline `style` attribute:
 // CSP blocks inline style attributes, and these are utilities generated from
 // the `@theme` tokens in global.css. See that file for why.
-const base = 'inline-block rounded-lg px-6 py-3 font-semibold';
+const base = 'inline-flex items-center gap-2 rounded-lg px-6 py-3 font-semibold';
 const classes =
   variant === 'primary'
     ? `${base} bg-cta text-white`
@@ -28,6 +30,19 @@ const classes =
       class={classes}
       rel="noopener"
     >
+      {icon === 'bag' && (
+        <svg
+          class="w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M6 7h12l1 13H5L6 7z" stroke-linejoin="round" />
+          <path d="M9 7a3 3 0 0 1 6 0" stroke-linecap="round" />
+        </svg>
+      )}
       {label}
     </a>
   )

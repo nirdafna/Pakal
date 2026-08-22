@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import FeatureCard from '../components/FeatureCard.astro';
+import Wordmark from '../components/Wordmark.astro';
 import PlaceCard from '../components/PlaceCard.astro';
 import SanityImage from '../components/SanityImage.astro';
 import WhatsAppCta from '../components/WhatsAppCta.astro';
@@ -30,37 +31,62 @@ const features = [
 ---
 
 <BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText}>
-  <section class="mx-auto max-w-6xl px-4 py-12">
-    <div class="grid items-center gap-8 lg:grid-cols-2">
-      <div>
-        <h1 class="text-5xl font-bold text-brand">{heroTitle}</h1>
-        <p class="mt-2 text-2xl text-brand">{heroTagline}</p>
-        <p class="mt-6 max-w-prose">{heroText}</p>
-        <div class="mt-8 flex flex-wrap gap-4">
-          {
-            settings?.whatsappPhone && (
-              <WhatsAppCta
-                phone={settings.whatsappPhone}
-                message={settings.purchaseMessage ?? 'היי, אשמח לפרטים על רכישת המשחק'}
-                label="לרכישת המשחק"
-              />
-            )
-          }
-          <a
-            href="/treks"
-            class="inline-block rounded-lg border-2 px-6 py-3 font-semibold border-brand text-brand"
-          >
-            למסלולים שבחפיסה
-          </a>
-        </div>
-        <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
-      </div>
-      {settings?.heroImage && (
-        <SanityImage image={settings.heroImage} priority class="rounded-2xl" />
-      )}
-    </div>
+  <!--
+    Full-bleed rather than inside the page container, because the mockup's hero
+    runs edge to edge behind the wordmark. Two states share this markup: with a
+    published `heroImage` the photo fills the section, and without one the same
+    layout falls back to the sand ground. Publishing the photo later is a
+    content action, not a code change.
 
-    <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    The scrim is sand-tinted, not dark, so the wordmark and copy stay navy in
+    both states — matching the mockup, where the photograph is washed back and
+    the type sits on top of it in brand colour.
+  -->
+  <section class="relative isolate overflow-hidden bg-sand">
+    {
+      settings?.heroImage && (
+        <>
+          <SanityImage
+            image={settings.heroImage}
+            priority
+            class="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+          <div class="absolute inset-0 -z-10 bg-sand/70"></div>
+        </>
+      )
+    }
+    <div class="mx-auto max-w-6xl px-4 py-16 text-center sm:py-24">
+      <Wordmark title={heroTitle} tagline={heroTagline} size="lg" heading />
+      <p class="mx-auto mt-8 max-w-prose">{heroText}</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-4">
+        {
+          settings?.whatsappPhone && (
+            <WhatsAppCta
+              phone={settings.whatsappPhone}
+              message={settings.purchaseMessage ?? 'היי, אשמח לפרטים על רכישת המשחק'}
+              label="לרכישת המשחק"
+              icon="bag"
+            />
+          )
+        }
+        <a
+          href="/treks"
+          class="inline-flex items-center gap-2 rounded-lg border-2 px-6 py-3 font-semibold border-brand text-brand"
+        >
+          <svg class="w-5" viewBox="0 0 24 32" fill="currentColor" aria-hidden="true">
+            <path
+              d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20c0-6.6-5.4-12-12-12zm0 16.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"
+            />
+          </svg>
+          למסלולים שבחפיסה
+        </a>
+      </div>
+      <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {features.map((feature) => <FeatureCard title={feature.title} body={feature.body} />)}
     </div>
 

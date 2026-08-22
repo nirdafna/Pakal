@@ -1,0 +1,112 @@
+---
+/**
+ * The פק"ל brand mark, per the approved mockup: navy wordmark with a green
+ * location pin set into the ק, card suits beneath, and the tagline over a
+ * brush stroke.
+ *
+ * Built from text and inline SVG rather than an image file. Aviv's logo
+ * artwork does not exist yet, and a text mark stays selectable, scales without
+ * a second asset request, and lets the CMS override the wording. Swapping in
+ * real artwork later means replacing this component, not every caller.
+ *
+ * No `style` attributes anywhere: CSP blocks them (see `global.css`), so
+ * everything here is a utility class generated from the `@theme` tokens.
+ */
+interface Props {
+  /** Defaults to the brand name; CMS `heroTitle` overrides it. */
+  title?: string;
+  /** Defaults to the brand tagline; CMS `heroTagline` overrides it. */
+  tagline?: string;
+  size?: 'sm' | 'lg';
+  /** Card suits sit under the header mark, not the hero one, as in the mockup. */
+  suits?: boolean;
+  /** Renders the wordmark as the page's `h1` instead of a plain span. */
+  heading?: boolean;
+}
+
+const {
+  title = 'פק"ל',
+  tagline = 'נהנים בכל דרך',
+  size = 'sm',
+  suits = size === 'sm',
+  heading = false,
+} = Astro.props;
+
+// The pin sits in the counter of the ק. Splitting on the first ק keeps that
+// tied to the glyph rather than to a hard-coded offset, so it survives a font
+// change — and a title with no ק (a CMS override) simply renders without a
+// pin instead of putting one in the wrong place.
+const pinIndex = title.indexOf('ק');
+const before = pinIndex === -1 ? title : title.slice(0, pinIndex);
+const after = pinIndex === -1 ? '' : title.slice(pinIndex + 1);
+
+const wordmarkSize = size === 'lg' ? 'text-6xl sm:text-7xl' : 'text-2xl';
+const taglineSize = size === 'lg' ? 'text-2xl sm:text-3xl' : 'text-xs';
+const suitSize = size === 'lg' ? 'text-lg' : 'text-[0.7rem]';
+const pinSize = size === 'lg' ? 'w-[0.28em]' : 'w-[0.3em]';
+const brushHeight = size === 'lg' ? 'h-2' : 'h-1';
+const Tag = heading ? 'h1' : 'span';
+---
+
+<span class="inline-block w-fit">
+  <Tag class={`block font-bold leading-none text-brand ${wordmarkSize}`}>
+    {before}
+    {
+      pinIndex !== -1 && (
+        <span class="relative inline-block">
+          ק
+          <svg
+            class={`absolute inset-x-0 top-[0.2em] mx-auto text-cta ${pinSize}`}
+            viewBox="0 0 24 32"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20c0-6.6-5.4-12-12-12zm0 16.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"
+            ></path>
+          </svg>
+        </span>
+      )
+    }
+    {after}
+  </Tag>
+
+  {
+    suits && (
+      <span class={`mt-1 flex justify-center gap-1 leading-none ${suitSize}`} aria-hidden="true">
+        <span class="text-brand">&#9827;</span>
+        <span class="text-accent">&#9830;</span>
+        <span class="text-accent">&#9829;</span>
+        <span class="text-brand">&#9824;</span>
+      </span>
+    )
+  }
+
+  <!--
+    The brush is positioned absolutely, not merely decorated: an inline SVG with
+    no width or height attribute falls back to the replaced-element default of
+    300x150px, and inside a shrink-to-fit box that default becomes the width of
+    the entire mark. Taking it out of flow lets the wordmark size itself from
+    the type, which is what it looked like it was doing until the header showed
+    a 300px-wide logo.
+  -->
+  <span class="relative mt-1 block pb-1">
+    <span class={`block text-center font-light leading-tight text-brand ${taglineSize}`}>
+      {tagline}
+    </span>
+    <svg
+      class={`absolute inset-x-0 bottom-0 w-full text-brand ${brushHeight}`}
+      viewBox="0 0 200 8"
+      preserveAspectRatio="none"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M2 6C40 2.5 78 1.4 116 2.2c28 .6 56 2 82 3.4"
+        stroke="currentColor"
+        stroke-width="2.4"
+        stroke-linecap="round"
+      ></path>
+    </svg>
+  </span>
+</span>

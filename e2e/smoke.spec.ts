@@ -130,3 +130,31 @@ test('CMS body copy keeps its heading hierarchy and list markers', async ({ page
     expect(computed.listPadStart!).toBeGreaterThan(0);
   }
 });
+
+// The mockup puts its only red on the card suits in the logo. `--color-accent`
+// existed as a token for weeks while nothing referenced it, so the palette was
+// documented as three colours and rendered as two. This asserts the red is
+// actually on the page, not merely defined.
+//
+// Matches by glyph rather than by class name, so a restyle of the wordmark
+// does not silently disable the check.
+test('the card-suit accent colour actually renders in the logo', async ({ page }) => {
+  await page.goto('/');
+
+  const { applied, token } = await page.evaluate(() => {
+    const suit = [...document.querySelectorAll('header *')].find(
+      (el) => el.children.length === 0 && el.textContent?.trim() === '♦',
+    );
+    return {
+      applied: suit ? getComputedStyle(suit).color : null,
+      token: getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-accent')
+        .trim(),
+    };
+  });
+
+  expect(applied, 'no ♦ suit glyph found in the header logo').not.toBeNull();
+
+  const [r, g, b] = token.replace('#', '').match(/../g)!.map((h) => parseInt(h, 16));
+  expect(applied).toBe(`rgb(${r}, ${g}, ${b})`);
+});

@@ -15,9 +15,12 @@
    Tailwind still emits each token as a custom property on `:root`, so any
    remaining `var(--color-*)` reference keeps working. */
 @theme {
-  --color-brand: #1b3a6b;
+  /* Sampled from the approved mockup rather than chosen: the previous values
+     (#1b3a6b navy, #4a8b3b green) read lighter and bluer on screen than the
+     design they were meant to match. */
+  --color-brand: #00306d;
   --color-accent: #c8322e;
-  --color-cta: #4a8b3b;
+  --color-cta: #5f7d35;
   --color-sand: #f4efe6;
   --color-ink: #24303f;
   --font-hebrew: 'Assistant Variable', system-ui, sans-serif;
