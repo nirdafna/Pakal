@@ -63,8 +63,19 @@ const features = [
             the copy on the right. One even opacity high enough to make navy
             text legible washed the product out along with it. Sand-tinted
             rather than dark, so the wordmark and copy stay navy in both states.
+
+            The stop sits at 52% rather than the default midpoint because the
+            copy reaches that far across, and the photograph puts a QR code
+            directly behind the end of the first line. Contrast there was never
+            the problem — it measured 5.95:1 against the ink, comfortably past
+            AA. What made the line hard to read was the *pattern*: luminance
+            standard deviation across the strip was 0.082. Holding the scrim at
+            88% to the 52% mark drops it to 0.029 and lifts contrast to 8.48:1,
+            while the box, the bottle and the card row keep their colour. A
+            text-shadow was the obvious reach here and the wrong tool — it adds
+            edges to a background whose problem is already too many edges.
           */}
-          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/75 to-sand/25" />
+          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/88 via-52% to-sand/20" />
         </>
       )
     }
@@ -77,7 +88,10 @@ const features = [
       */}
       <div class="max-w-xl">
         <Wordmark title={heroTitle} tagline={heroTagline} size="lg" heading />
-        <p class="mt-8 text-lg">{heroText}</p>
+        {/* A shorter measure than the column: it pulls the line endings back
+            off the QR code in the photograph, and 45-ish characters is an
+            easier read than the full 576px anyway. */}
+        <p class="mt-8 max-w-md text-lg">{heroText}</p>
         <div class="mt-8 flex flex-wrap gap-4">
           {
             settings?.whatsappPhone && (
