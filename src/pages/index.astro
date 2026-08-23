@@ -30,79 +30,100 @@ const features = [
 ];
 ---
 
-<BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText}>
+<BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText} heroOverlay>
   <!--
-    Full-bleed rather than inside the page container, because the mockup's hero
-    runs edge to edge behind the wordmark. Two states share this markup: with a
-    published `heroImage` the photo fills the section, and without one the same
-    layout falls back to the sand ground. Publishing the photo later is a
-    content action, not a code change.
+    One full viewport of photograph carrying the header, the copy and the four
+    feature cards, exactly as the approved mockup lays it out.
 
-    The scrim is sand-tinted, not dark, so the wordmark and copy stay navy in
-    both states — matching the mockup, where the photograph is washed back and
-    the type sits on top of it in brand colour.
+    `-mt-28 pt-28`: the image has to run behind the header, but the header is
+    rendered by the layout above this slot and cannot be reached from here.
+    Pulling the section up by the header's height and padding its contents back
+    down by the same amount puts the photograph under the navigation without
+    either element having to know the other's size — and because the two values
+    cancel, error in the value moves nothing — it only has to be at least the
+    header's height, and 7rem leaves room for the header to grow. `Header`
+    carries `relative z-10` so the nav still paints above the image.
+
+    Two states share this markup: with a published `heroImage` the photo fills
+    the screen, and without one the same layout falls back to the sand ground.
+    Publishing the photo is a content action, not a code change.
   -->
-  <section class="relative isolate overflow-hidden bg-sand">
+  <section class="relative isolate -mt-28 flex min-h-svh flex-col overflow-hidden bg-sand pt-28">
     {
       settings?.heroImage && (
         <>
           <SanityImage
             image={settings.heroImage}
             priority
-            class="absolute inset-0 -z-10 h-full w-full object-cover"
+            class="absolute inset-0 -z-20 h-full w-full object-cover"
           />
-          <div class="absolute inset-0 -z-10 bg-sand/70"></div>
+          {/*
+            A directional scrim, not a flat wash: the mockup keeps the box and
+            the cards saturated on the left and fades the photograph out under
+            the copy on the right. One even opacity high enough to make navy
+            text legible washed the product out along with it. Sand-tinted
+            rather than dark, so the wordmark and copy stay navy in both states.
+          */}
+          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/75 to-sand/25" />
         </>
       )
     }
-    <div class="mx-auto max-w-6xl px-4 py-12 text-center sm:py-24">
-      <Wordmark title={heroTitle} tagline={heroTagline} size="lg" heading />
-      <p class="mx-auto mt-8 max-w-prose">{heroText}</p>
-      <div class="mt-8 flex flex-wrap justify-center gap-4">
-        {
-          settings?.whatsappPhone && (
-            <WhatsAppCta
-              phone={settings.whatsappPhone}
-              message={settings.purchaseMessage ?? 'היי, אשמח לפרטים על רכישת המשחק'}
-              label="לרכישת המשחק"
-              icon="bag"
-            />
-          )
-        }
-        <a
-          href="/treks"
-          class="inline-flex items-center gap-2 rounded-lg border-2 px-6 py-3 font-semibold border-brand text-brand"
-        >
-          <svg class="w-5" viewBox="0 0 24 32" fill="currentColor" aria-hidden="true">
-            <path
-              d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20c0-6.6-5.4-12-12-12zm0 16.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"
-            />
-          </svg>
-          למסלולים שבחפיסה
-        </a>
-      </div>
-      <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
-    </div>
-  </section>
 
-  <section class="mx-auto max-w-6xl px-4 py-10 sm:py-12">
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {features.map((feature) => <FeatureCard title={feature.title} body={feature.body} />)}
-    </div>
-
-    {
-      places.length > 0 && (
-        <div class="mt-16">
-          <h2 class="text-2xl font-bold">מהמסלולים שבחפיסה</h2>
-          <ul class="mt-6 grid gap-6 sm:grid-cols-3">
-            {places.map((place) => (
-              <li>
-                <PlaceCard place={place} />
-              </li>
-            ))}
-          </ul>
+    <div class="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-10">
+      {/*
+        A column held against the inline-start edge — the right, in an RTL
+        document — so the copy sits clear of the box and cards on the left of
+        the photograph instead of on top of them.
+      */}
+      <div class="max-w-xl">
+        <Wordmark title={heroTitle} tagline={heroTagline} size="lg" heading />
+        <p class="mt-8 text-lg">{heroText}</p>
+        <div class="mt-8 flex flex-wrap gap-4">
+          {
+            settings?.whatsappPhone && (
+              <WhatsAppCta
+                phone={settings.whatsappPhone}
+                message={settings.purchaseMessage ?? 'היי, אשמח לפרטים על רכישת המשחק'}
+                label="לרכישת המשחק"
+                icon="bag"
+              />
+            )
+          }
+          <a
+            href="/treks"
+            class="inline-flex items-center gap-2 rounded-lg border-2 px-6 py-3 font-semibold border-brand text-brand"
+          >
+            <svg class="w-5" viewBox="0 0 24 32" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 0C5.4 0 0 5.4 0 12c0 8.4 12 20 12 20s12-11.6 12-20c0-6.6-5.4-12-12-12zm0 16.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"
+              />
+            </svg>
+            למסלולים שבחפיסה
+          </a>
         </div>
-      )
-    }
+        <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
+      </div>
+    </div>
+
+    <div class="mx-auto w-full max-w-6xl px-4 pb-10">
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {features.map((feature) => <FeatureCard title={feature.title} body={feature.body} />)}
+      </div>
+    </div>
   </section>
+
+  {
+    places.length > 0 && (
+      <section class="mx-auto max-w-6xl px-4 py-10 sm:py-12">
+        <h2 class="text-2xl font-bold">מהמסלולים שבחפיסה</h2>
+        <ul class="mt-6 grid gap-6 sm:grid-cols-3">
+          {places.map((place) => (
+            <li>
+              <PlaceCard place={place} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 </BaseLayout>

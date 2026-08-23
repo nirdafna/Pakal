@@ -1,6 +1,17 @@
 ---
 import Wordmark from './Wordmark.astro';
 
+interface Props {
+  /**
+   * True when the header sits over a page-level photograph instead of the sand
+   * ground. It drops the divider — a hairline ruled across a photo reads as a
+   * rendering defect rather than as structure.
+   */
+  overBackdrop?: boolean;
+}
+
+const { overBackdrop = false } = Astro.props;
+
 const links = [
   { href: '/', label: 'דף הבית' },
   { href: '/treks', label: 'המסלולים שבחפיסה' },
@@ -27,8 +38,13 @@ const linkClass = (href: string) =>
   `details`/`summary` rather than a scripted menu: no JavaScript, so nothing to
   block under the site's CSP and nothing to load on a phone with bad reception.
   This header is the first thing a stranger sees after scanning a printed card.
+
+  `relative z-10` unconditionally, on every page: the homepage hero follows this
+  element in the document and pulls itself up behind it with a negative margin,
+  so without a stacking position of its own the photograph would paint over the
+  navigation. Positioning here costs the other pages nothing.
 -->
-<header class="border-b border-black/10">
+<header class:list={['relative z-10', !overBackdrop && 'border-b border-black/10']}>
   <nav class="relative mx-auto flex max-w-6xl items-center gap-6 px-4 py-4" aria-label="ניווט ראשי">
     <a href="/" class="shrink-0" aria-label='פק"ל — דף הבית'><Wordmark size="sm" /></a>
 

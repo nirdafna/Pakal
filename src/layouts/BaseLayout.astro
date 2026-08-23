@@ -6,9 +6,15 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title: string;
   description?: string;
+  /**
+   * Set by a page whose first section runs a full-bleed photograph up behind
+   * the header. Only the header's own appearance changes here; the page owns
+   * the image and the overlap.
+   */
+  heroOverlay?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, heroOverlay = false } = Astro.props;
 ---
 
 <html lang="he" dir="rtl">
@@ -31,7 +37,7 @@ const { title, description } = Astro.props;
         text only until then. */}
   </head>
   <body class="min-h-screen flex flex-col">
-    <Header />
+    <Header overBackdrop={heroOverlay} />
     <main class="flex-1">
       <slot />
     </main>

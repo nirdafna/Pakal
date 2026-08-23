@@ -184,3 +184,59 @@ test('the wide header shows its links without a menu', async ({ page }) => {
   await expect(page.locator('summary')).toBeHidden();
   await expect(page.getByRole('link', { name: 'מתנה לחברות' })).toBeVisible();
 });
+
+// The hero photograph is meant to run the full height of the first screen and
+// pass *behind* the navigation, as the approved mockup shows. The mechanism is
+// a negative top margin on the section cancelled by equal top padding on its
+// contents (see `src/pages/index.astro`), which is exactly the kind of thing a
+// later spacing tweak undoes without anyone noticing on a screenshot.
+//
+// Skipped rather than passed vacuously when no photo is published: with
+// `siteSettings.heroImage` empty there is no image element to measure, and an
+// assertion over a missing element is a guard that cannot fail.
+test('the hero photograph runs behind the header and fills the first screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+
+  const photo = page.locator('main section img').first();
+  test.skip(
+    (await photo.count()) === 0,
+    'no hero photograph rendered — siteSettings.heroImage not published yet',
+  );
+
+  const [photoBox, headerBox] = [
+    await photo.boundingBox(),
+    await page.locator('header').boundingBox(),
+  ];
+  expect(photoBox, 'hero photograph has no layout box').toBeTruthy();
+  expect(headerBox, 'header has no layout box').toBeTruthy();
+
+  // Starts at or above the header's own top edge, so the nav sits on the photo.
+  expect(photoBox!.y).toBeLessThanOrEqual(headerBox!.y);
+  // And reaches the fold: a section that collapsed back to its content height
+  // would still overlap the header but no longer fill the screen.
+  expect(photoBox!.height).toBeGreaterThanOrEqual(800);
+});
+
+// The copy column is held against the inline-start edge — the right, in this
+// RTL document — so it clears the box and cards on the left of the photograph.
+// Re-centring it is a one-word change in the markup and invisible in a diff.
+test('the hero copy sits on the right half of the screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+
+  // Measured against the hero container's own right edge rather than against
+  // the middle of the screen: a centred `max-w-xl` column still has its heading
+  // in the right half, so a midpoint assertion passes on the layout this test
+  // exists to reject. The gap allowed here is the container's own `px-4`.
+  const heading = await page.locator('main section h1').boundingBox();
+  const container = await page
+    .locator('main section > div')
+    .filter({ has: page.locator('h1') })
+    .boundingBox();
+  expect(heading, 'no h1 layout box').toBeTruthy();
+  expect(container, 'no hero container layout box').toBeTruthy();
+
+  const gapToRightEdge = container!.x + container!.width - (heading!.x + heading!.width);
+  expect(gapToRightEdge).toBeLessThanOrEqual(40);
+});
