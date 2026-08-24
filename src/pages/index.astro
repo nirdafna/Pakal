@@ -30,18 +30,19 @@ const features = [
 ];
 ---
 
-<BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText} heroOverlay>
+<BaseLayout title='פק"ל — נהנים בכל דרך' description={heroText} heroOverlay largeHeaderMark>
   <!--
     One full viewport of photograph carrying the header, the copy and the four
     feature cards, exactly as the approved mockup lays it out.
 
-    `-mt-28 pt-28`: the image has to run behind the header, but the header is
+    `-mt-32 pt-32`: the image has to run behind the header, but the header is
     rendered by the layout above this slot and cannot be reached from here.
     Pulling the section up by the header's height and padding its contents back
     down by the same amount puts the photograph under the navigation without
     either element having to know the other's size — and because the two values
     cancel, error in the value moves nothing — it only has to be at least the
-    header's height, and 7rem leaves room for the header to grow. `Header`
+    header's height, and 8rem clears the homepage's larger brand mark with room
+    to spare. `Header`
     carries `relative z-10` so the nav still paints above the image.
 
     Two states share this markup: with a published `heroImage` the photo fills
@@ -50,10 +51,10 @@ const features = [
     photograph itself is treated lives in `HeroBackdrop`, shared with the inner
     pages so the two cannot drift apart.
   -->
-  <section class="relative isolate -mt-28 flex min-h-svh flex-col overflow-hidden bg-sand pt-28">
+  <section class="relative isolate -mt-32 flex min-h-svh flex-col overflow-hidden bg-sand pt-32">
     <HeroBackdrop image={settings?.heroImage} priority />
 
-    <div class="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-10">
+    <div class="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 py-10">
       {/*
         A column held against the inline-start edge — the right, in an RTL
         document — so the copy sits clear of the box and cards on the left of

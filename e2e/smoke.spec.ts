@@ -357,3 +357,25 @@ test('the instructions navigation stays reachable from deep in the page', async 
   const heading = await page.locator('main h1').boundingBox();
   expect(nav!.y + nav!.height).toBeLessThanOrEqual(heading!.y + 1);
 });
+
+// The homepage's brand mark is a size up, and the hero's overlap with the
+// header has to keep covering it. Those two are only correct together: growing
+// the mark without growing the overlap leaves a strip of bare sand above the
+// photograph, which is exactly the kind of thing a screenshot at one viewport
+// misses. Asserted as a comparison between the two pages, so it fails if the
+// homepage stops asking for the larger mark *or* if an inner page starts.
+test('the homepage carries a larger brand mark than the inner pages', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await page.goto('/how-to-play');
+  const inner = await page.locator('header').boundingBox();
+
+  await page.goto('/');
+  const home = await page.locator('header').boundingBox();
+  const photo = await page.locator('main section img').first().boundingBox();
+
+  expect(home!.height).toBeGreaterThan(inner!.height);
+  // And the photograph still starts at or above the taller header's top edge.
+  expect(photo, 'no hero photograph').toBeTruthy();
+  expect(photo!.y).toBeLessThanOrEqual(home!.y);
+});
