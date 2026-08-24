@@ -315,3 +315,25 @@ test('the instructions page hides its scrollbar without disabling scrolling', as
   await page.waitForFunction(() => window.scrollY > 0);
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });
+
+// The title bar pins so a reader deep in the rules still knows which page they
+// are on. `sticky top-0` is one word away from scrolling off with everything
+// else, and nothing else in the suite would notice.
+test('the instructions title stays put while the rules scroll past it', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const heading = page.locator('main h1');
+  const before = await heading.boundingBox();
+  expect(before, 'no h1 layout box').toBeTruthy();
+
+  await page.evaluate(() => window.scrollTo(0, 700));
+  await page.waitForFunction(() => window.scrollY === 700);
+
+  const after = await heading.boundingBox();
+  // Still on screen and pinned near the top — without `sticky` it would have
+  // travelled the full 700px and be far above the viewport.
+  expect(after!.y).toBeGreaterThanOrEqual(0);
+  expect(after!.y).toBeLessThan(before!.y);
+  await expect(heading).toBeInViewport();
+});
