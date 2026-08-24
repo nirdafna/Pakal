@@ -132,3 +132,16 @@ summary {
 summary::-webkit-details-marker {
   display: none;
 }
+
+/* Hides the scrollbar without disabling scrolling — used by pages whose content
+   is meant to read as floating over a still photograph. `scrollbar-width` is
+   the standard property; the WebKit pseudo-element is what Safari and older
+   Chrome still read. Scrolling itself is untouched, so the keyboard, the mouse
+   wheel, find-in-page and a phone's URL-bar collapse all behave normally. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

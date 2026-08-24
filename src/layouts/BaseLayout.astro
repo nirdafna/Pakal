@@ -12,12 +12,37 @@ interface Props {
    * the image and the overlap.
    */
   heroOverlay?: boolean;
+  /**
+   * Hides the document scrollbar, for a page whose content is meant to read as
+   * floating over a still photograph rather than sitting in a scrolling frame.
+   *
+   * Deliberately hides the bar and NOT the scrolling: the page still scrolls
+   * the document, so the keyboard, find-in-page, and a phone's URL-bar collapse
+   * all behave normally. An inner scroll container would have broken all three.
+   * The cost is real and accepted — a long reference page loses its only "how
+   * much is left" signal.
+   */
+  hideScrollbar?: boolean;
+  /** Pins the navigation, so a reader deep in a long page can still leave it. */
+  stickyHeader?: boolean;
 }
 
-const { title, description, heroOverlay = false } = Astro.props;
+const {
+  title,
+  description,
+  heroOverlay = false,
+  hideScrollbar = false,
+  stickyHeader = false,
+} = Astro.props;
+
+// Rendered only when a page fills it, and wrapped here rather than by the page:
+// `position: fixed` resolves against the viewport, so the photograph stays put
+// while the document scrolls over it — which is the whole effect — and only the
+// layout can place an element outside the page's own section.
+const hasBackdrop = Astro.slots.has('backdrop');
 ---
 
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" class:list={[hideScrollbar && 'no-scrollbar']}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -37,8 +62,22 @@ const { title, description, heroOverlay = false } = Astro.props;
         text only until then. */}
   </head>
   <body class="min-h-screen flex flex-col">
-    <Header overBackdrop={heroOverlay} />
-    <main class="flex-1">
+    {
+      hasBackdrop && (
+        <div class="fixed inset-0" aria-hidden="true">
+          <slot name="backdrop" />
+        </div>
+      )
+    }
+    {/*
+      `relative` on both, so they paint above the fixed backdrop by document
+      order instead of by a negative z-index on the photograph — a negative one
+      would also have to beat the page's own sand background, which is a fight
+      that depends on which element the browser propagated it from. `Header`
+      already carries `relative z-10` for the homepage's overlap.
+    */}
+    <Header overBackdrop={heroOverlay} sticky={stickyHeader} />
+    <main class:list={['flex-1', hasBackdrop && 'relative']}>
       <slot />
     </main>
     <Footer />

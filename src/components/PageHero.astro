@@ -1,0 +1,60 @@
+---
+/**
+ * The title bar on an inner page: the same right-attached column the homepage
+ * opens with, but compact, and pinned to the top so it stays readable while the
+ * page's content rolls up underneath it.
+ *
+ * It carries no photograph of its own. On these pages the picture is fixed to
+ * the viewport by the layout's `backdrop` slot and stays still while the
+ * content scrolls over it, so a second copy inside this bar would scroll away
+ * and tear away from the one behind it.
+ *
+ * A full-screen hero was the option rejected at mockup, and even the 448px band
+ * that replaced it gave the reader a third of a screen of scenery before the
+ * first rule. Someone arriving at an inner page has come to read something,
+ * usually after scanning a printed card outdoors; every pixel this bar takes is
+ * a pixel of what they came for.
+ *
+ * `sticky` rather than `fixed`: it holds its place in the flow, so the content
+ * below starts under it rather than beneath an overlay, and it pins on its own
+ * once it reaches the top. Nothing here needs to know the header's height.
+ */
+interface Props {
+  title: string;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+---
+
+<section class="sticky top-24">
+  {/*
+    Frosted rather than transparent. A see-through bar would let the cards
+    travel visibly *through* the title as they scroll under it; blurring what
+    passes behind gives them somewhere to go. The wash is sand, so the
+    photograph still reads through the bar rather than being boxed out of it.
+
+    It reaches 7rem above its own box, which is more than the navigation's
+    height, and pins at `top-24`, which is a little less. Those two numbers are
+    deliberately not equal and neither has to be exact: the overshoot covers
+    everything from above the viewport down to the title, so the nav sits in the
+    same unbroken band and no sliver of scrolling card can appear between them.
+    Backed only to its own top edge, the frosting started below the nav and read
+    as a stray blurred stripe laid across the photograph.
+
+    No `z-index` on the section, deliberately: the header carries `z-10`, so
+    leaving this at the default keeps the overshoot *behind* the nav rather
+    than frosting over it, while still painting above the cards, which are not
+    positioned at all.
+  */}
+  <div class="absolute inset-x-0 -top-28 bottom-0 bg-sand/75 backdrop-blur-sm"></div>
+
+  <div class="relative mx-auto w-full max-w-6xl px-4 py-5">
+    <div class="max-w-xl">
+      <h1 class="text-3xl font-bold leading-tight text-brand sm:text-4xl">{title}</h1>
+      {/* The shorter measure keeps the line endings off the busiest part of the
+          photograph, the same reason the homepage's lead carries it. */}
+      {lead && <p class="mt-2 max-w-md">{lead}</p>}
+    </div>
+  </div>
+</section>

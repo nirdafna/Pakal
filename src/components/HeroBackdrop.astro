@@ -1,0 +1,83 @@
+---
+import SanityImage from './SanityImage.astro';
+import type { SanityImage as SanityImageType } from '../lib/sanity/types';
+
+/**
+ * The photograph and its scrim, absolutely positioned to fill whichever section
+ * encloses it. That section owns the geometry — its height, its overlap with
+ * the header — and this owns how the picture is treated, so every page that
+ * runs the photograph treats it identically. Two copies of the gradient below
+ * would drift the moment one of them was tuned.
+ *
+ * The enclosing section must carry `relative isolate` and a `bg-sand` ground:
+ * `isolate` keeps the negative z-indexes from escaping behind the page, and the
+ * ground is what shows when no photograph is published, which is a supported
+ * state rather than a broken one.
+ */
+interface Props {
+  image?: SanityImageType;
+  /** True for the largest image above the fold on its page. */
+  priority?: boolean;
+  /**
+   * Which part of the photograph survives the crop, as an `object-position`
+   * utility. A full-screen hero keeps almost all of a 3:2 photograph and wants
+   * the centre; a wide shallow band throws away two thirds of its height, and
+   * centring there cuts the game box in half. Written as a literal class so
+   * Tailwind's scanner still finds both values in this file.
+   */
+  focus?: 'object-center' | 'object-[center_35%]';
+  /**
+   * How hard to knock the photograph back.
+   *
+   * `hero` is the homepage's directional ramp — strong under the copy on the
+   * right, barely there over the product on the left. It exists because the
+   * copy crosses a QR code; the reasoning is below.
+   *
+   * `page` is for a photograph fixed behind a whole scrolling page. There is no
+   * one side the text sits on any more — white cards travel across all of it —
+   * so the wash has to be even, and only heavy enough that the cards read as
+   * the foreground. Sections that need more cover than that add their own ramp
+   * locally, as `PageHero` does under the title.
+   */
+  wash?: 'hero' | 'page';
+}
+
+const { image, priority = false, focus = 'object-center', wash = 'hero' } = Astro.props;
+---
+
+{
+  image && (
+    <>
+      <SanityImage
+        image={image}
+        priority={priority}
+        class={`absolute inset-0 -z-20 h-full w-full object-cover ${focus}`}
+      />
+      {/*
+        A directional scrim, not a flat wash: the mockup keeps the box and the
+        cards saturated on the left and fades the photograph out under the copy
+        on the right. One even opacity high enough to make navy text legible
+        washed the product out along with it. Sand-tinted rather than dark, so
+        the wordmark and copy stay navy in both states.
+
+        The stop sits at 52% rather than the default midpoint because the copy
+        reaches that far across, and the photograph puts a QR code directly
+        behind the end of the first line. Contrast there was never the problem —
+        it measured 5.95:1 against the ink, comfortably past AA. What made the
+        line hard to read was the *pattern*: luminance standard deviation across
+        the strip was 0.082. Holding the scrim at 88% to the 52% mark drops it
+        to 0.029 and lifts contrast to 8.48:1, while the box, the bottle and the
+        card row keep their colour. A text-shadow was the obvious reach here and
+        the wrong tool — it adds edges to a background whose problem is already
+        too many edges.
+      */}
+      {
+        wash === 'page' ? (
+          <div class="absolute inset-0 -z-10 bg-sand/55" />
+        ) : (
+          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/88 via-52% to-sand/20" />
+        )
+      }
+    </>
+  )
+}

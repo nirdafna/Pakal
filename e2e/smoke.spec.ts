@@ -240,3 +240,120 @@ test('the hero copy sits on the right half of the screen', async ({ page }) => {
   const gapToRightEdge = container!.x + container!.width - (heading!.x + heading!.width);
   expect(gapToRightEdge).toBeLessThanOrEqual(40);
 });
+
+// The instructions page is the first inner page to take the homepage's
+// treatment: the photograph fixed behind the whole viewport, the rules in one
+// card per numbered section travelling over it, and no scrollbar. Each half is
+// easy to undo by accident — the card split lives in `splitIntoSections`, the
+// stillness in a single `position: fixed`, and the hidden bar in one utility
+// class that must never take the scrolling with it.
+test('the instructions page cards each rule section', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const cards = page.locator('main article');
+  const cardCount = await cards.count();
+
+  test.skip(cardCount === 0, 'no CMS body published for how-to-play');
+
+  // One card per section, not one card around everything: with the published
+  // body that is nine-ish cards, and a regression to a single container makes
+  // this exactly 1.
+  expect(cardCount).toBeGreaterThan(1);
+  // Every card is headed by its own section title — an off-by-one in the split
+  // would leave a headless card carrying orphaned paragraphs.
+  expect(await page.locator('main article h2').count()).toBe(cardCount);
+});
+
+test('the instructions photograph holds still while the rules scroll over it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const photo = page.locator('body > div img').first();
+  test.skip(
+    (await photo.count()) === 0,
+    'no photograph rendered — siteSettings.heroImage not published yet',
+  );
+
+  const firstCard = page.locator('main article').first();
+  const before = { photo: await photo.boundingBox(), card: await firstCard.boundingBox() };
+  expect(before.photo, 'photograph has no layout box').toBeTruthy();
+
+  // Edge to edge, including out past both sides of the text column.
+  expect(before.photo!.width).toBeGreaterThanOrEqual(1280);
+  expect(before.photo!.height).toBeGreaterThanOrEqual(800);
+
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await page.waitForFunction(() => window.scrollY === 600);
+
+  const after = { photo: await photo.boundingBox(), card: await firstCard.boundingBox() };
+  // The card moved by the full scroll distance and the photograph did not move
+  // at all. Together those two are the effect; either alone passes on a layout
+  // that does not have it.
+  expect(after.card!.y).toBeCloseTo(before.card!.y - 600, 0);
+  expect(after.photo!.y).toBeCloseTo(before.photo!.y, 0);
+});
+
+// The bar is hidden; the scrolling must not be. Hiding both would strand a
+// reader on section one with no keyboard, wheel or find-in-page way out, and
+// nothing else in the suite would notice.
+test('the instructions page hides its scrollbar without disabling scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const { scrollbarWidth, scrollable } = await page.evaluate(() => ({
+    scrollbarWidth: getComputedStyle(document.documentElement).scrollbarWidth,
+    scrollable: document.documentElement.scrollHeight > window.innerHeight + 100,
+  }));
+
+  expect(scrollbarWidth).toBe('none');
+  expect(scrollable, 'nothing to scroll — this test would pass vacuously').toBe(true);
+
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => window.scrollY > 0);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+// The title bar pins so a reader deep in the rules still knows which page they
+// are on. `sticky top-0` is one word away from scrolling off with everything
+// else, and nothing else in the suite would notice.
+test('the instructions title stays put while the rules scroll past it', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const heading = page.locator('main h1');
+  const before = await heading.boundingBox();
+  expect(before, 'no h1 layout box').toBeTruthy();
+
+  await page.evaluate(() => window.scrollTo(0, 700));
+  await page.waitForFunction(() => window.scrollY === 700);
+
+  const after = await heading.boundingBox();
+  // It does not move at all. The navigation above it is pinned too and is
+  // exactly as tall as the offset this bar pins at, so the title occupies the
+  // same strip of screen at rest and at full scroll. Without `sticky` it would
+  // have travelled the full 700px and sat far above the viewport.
+  expect(after!.y).toBeCloseTo(before!.y, 0);
+  await expect(heading).toBeInViewport();
+});
+
+// The point of pinning the navigation: a reader who has scrolled deep into the
+// rules can still leave the page. Without it the only way out is to scroll all
+// the way back to the top, which on a ninety-block page is a long way.
+test('the instructions navigation stays reachable from deep in the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  await page.waitForFunction(() => window.scrollY === 1500);
+
+  // A real link, not the header box: the header could be pinned and still have
+  // its contents scrolled out of it.
+  await expect(page.getByRole('link', { name: 'דף הבית', exact: true })).toBeInViewport();
+  // And the nav still sits above the title it shares the band with.
+  const nav = await page.locator('header').boundingBox();
+  const heading = await page.locator('main h1').boundingBox();
+  expect(nav!.y + nav!.height).toBeLessThanOrEqual(heading!.y + 1);
+});
