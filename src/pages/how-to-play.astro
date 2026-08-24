@@ -41,7 +41,7 @@ const sections = splitIntoSections(page?.body);
       sections.length > 0 ? (
         <div class="flex flex-col gap-4">
           {sections.map((blocks) => (
-            <article class="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+            <article class="rounded-xl bg-sand p-6 shadow-sm sm:p-8">
               <PortableText value={blocks} />
             </article>
           ))}
