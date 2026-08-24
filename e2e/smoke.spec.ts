@@ -226,18 +226,26 @@ test('the hero copy sits on the right half of the screen', async ({ page }) => {
   await page.goto('/');
 
   // Measured against the hero container's own right edge rather than against
-  // the middle of the screen: a centred `max-w-xl` column still has its heading
-  // in the right half, so a midpoint assertion passes on the layout this test
-  // exists to reject. The gap allowed here is the container's own `px-4`.
-  const heading = await page.locator('main section h1').boundingBox();
+  // the middle of the screen: a centred `max-w-xl` column still has most of its
+  // content in the right half, so a midpoint assertion passes on the layout
+  // this test exists to reject. The gap allowed here is the container's own
+  // `px-4`.
+  //
+  // The COLUMN is what is pinned right, not the heading: the copy is centred
+  // inside the column, so the mark's own edges float. Measuring the heading
+  // would fail on a layout that is correct.
   const container = await page
     .locator('main section > div')
     .filter({ has: page.locator('h1') })
     .boundingBox();
-  expect(heading, 'no h1 layout box').toBeTruthy();
+  const column = await page
+    .locator('main section > div > div')
+    .filter({ has: page.locator('h1') })
+    .boundingBox();
   expect(container, 'no hero container layout box').toBeTruthy();
+  expect(column, 'no hero copy column layout box').toBeTruthy();
 
-  const gapToRightEdge = container!.x + container!.width - (heading!.x + heading!.width);
+  const gapToRightEdge = container!.x + container!.width - (column!.x + column!.width);
   expect(gapToRightEdge).toBeLessThanOrEqual(40);
 });
 

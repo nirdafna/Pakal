@@ -58,15 +58,18 @@ const features = [
       {/*
         A column held against the inline-start edge — the right, in an RTL
         document — so the copy sits clear of the box and cards on the left of
-        the photograph instead of on top of them.
+        the photograph instead of on top of them. The column stays there; its
+        contents are centred within it, because the mark, the sentence and the
+        two buttons are all different widths and left them a ragged edge
+        against each other.
       */}
-      <div class="max-w-xl">
+      <div class="max-w-xl text-center">
         <Wordmark title={heroTitle} tagline={heroTagline} size="lg" heading />
         {/* A shorter measure than the column: it pulls the line endings back
             off the QR code in the photograph, and 45-ish characters is an
             easier read than the full 576px anyway. */}
-        <p class="mt-8 max-w-md text-lg">{heroText}</p>
-        <div class="mt-8 flex flex-wrap gap-4">
+        <p class="mx-auto mt-8 max-w-md text-lg">{heroText}</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
           {
             settings?.whatsappPhone && (
               <WhatsAppCta
