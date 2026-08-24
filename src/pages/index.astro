@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import FeatureCard from '../components/FeatureCard.astro';
 import Wordmark from '../components/Wordmark.astro';
 import PlaceCard from '../components/PlaceCard.astro';
-import SanityImage from '../components/SanityImage.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 import WhatsAppCta from '../components/WhatsAppCta.astro';
 import { getPlaces, getSiteSettings } from '../lib/sanity/queries';
 
@@ -46,39 +46,12 @@ const features = [
 
     Two states share this markup: with a published `heroImage` the photo fills
     the screen, and without one the same layout falls back to the sand ground.
-    Publishing the photo is a content action, not a code change.
+    Publishing the photo is a content action, not a code change. How the
+    photograph itself is treated lives in `HeroBackdrop`, shared with the inner
+    pages so the two cannot drift apart.
   -->
   <section class="relative isolate -mt-28 flex min-h-svh flex-col overflow-hidden bg-sand pt-28">
-    {
-      settings?.heroImage && (
-        <>
-          <SanityImage
-            image={settings.heroImage}
-            priority
-            class="absolute inset-0 -z-20 h-full w-full object-cover"
-          />
-          {/*
-            A directional scrim, not a flat wash: the mockup keeps the box and
-            the cards saturated on the left and fades the photograph out under
-            the copy on the right. One even opacity high enough to make navy
-            text legible washed the product out along with it. Sand-tinted
-            rather than dark, so the wordmark and copy stay navy in both states.
-
-            The stop sits at 52% rather than the default midpoint because the
-            copy reaches that far across, and the photograph puts a QR code
-            directly behind the end of the first line. Contrast there was never
-            the problem — it measured 5.95:1 against the ink, comfortably past
-            AA. What made the line hard to read was the *pattern*: luminance
-            standard deviation across the strip was 0.082. Holding the scrim at
-            88% to the 52% mark drops it to 0.029 and lifts contrast to 8.48:1,
-            while the box, the bottle and the card row keep their colour. A
-            text-shadow was the obvious reach here and the wrong tool — it adds
-            edges to a background whose problem is already too many edges.
-          */}
-          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/88 via-52% to-sand/20" />
-        </>
-      )
-    }
+    <HeroBackdrop image={settings?.heroImage} priority />
 
     <div class="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-10">
       {/*

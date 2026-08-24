@@ -240,3 +240,37 @@ test('the hero copy sits on the right half of the screen', async ({ page }) => {
   const gapToRightEdge = container!.x + container!.width - (heading!.x + heading!.width);
   expect(gapToRightEdge).toBeLessThanOrEqual(40);
 });
+
+// The instructions page is the first inner page to take the homepage's
+// treatment: photograph behind the header, then one card per numbered rule
+// section instead of ninety blocks in a single column. Both halves are easy to
+// undo by accident — the card split lives in `splitIntoSections`, and the
+// overlap in the same cancelling margin pair the homepage uses.
+test('the instructions page cards each rule section under a photo band', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const cards = page.locator('main article');
+  const headings = page.locator('main article h2');
+  const cardCount = await cards.count();
+
+  test.skip(cardCount === 0, 'no CMS body published for how-to-play');
+
+  // One card per section, not one card around everything: with the published
+  // body that is nine-ish cards, and a regression to a single container makes
+  // this exactly 1.
+  expect(cardCount).toBeGreaterThan(1);
+  // Every card is headed by its own section title — an off-by-one in the split
+  // would leave a headless card carrying orphaned paragraphs.
+  expect(await headings.count()).toBe(cardCount);
+
+  const photo = page.locator('main section img').first();
+  const [photoBox, headerBox] = [
+    await photo.boundingBox(),
+    await page.locator('header').boundingBox(),
+  ];
+  expect(photoBox, 'no photo band on the instructions page').toBeTruthy();
+  expect(photoBox!.y).toBeLessThanOrEqual(headerBox!.y);
+  // A band, not a full screen — that was the option rejected at mockup.
+  expect(photoBox!.height).toBeLessThan(800);
+});

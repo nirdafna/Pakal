@@ -1,22 +1,41 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
 import PortableText from '../components/PortableText.astro';
-import { getPage } from '../lib/sanity/queries';
+import { splitIntoSections } from '../lib/portable-text';
+import { getPage, getSiteSettings } from '../lib/sanity/queries';
 
-const page = await getPage('how-to-play');
+const [page, settings] = await Promise.all([getPage('how-to-play'), getSiteSettings()]);
+
+const description = 'חוקי המשחק והדרכים לשחק בחפיסת פק"ל.';
+const sections = splitIntoSections(page?.body);
 ---
 
-<BaseLayout
-  title='איך משחקים — פק"ל'
-  description='חוקי המשחק והדרכים לשחק בחפיסת פק"ל.'
->
+<BaseLayout title='איך משחקים — פק"ל' description={description} heroOverlay>
+  <PageHero title={page?.title ?? 'איך משחקים'} lead={description} image={settings?.heroImage} />
+
+  <!--
+    One card per numbered rule section rather than one card around all ninety
+    blocks. The page is a reference, not an essay: a reader looking up what a
+    queen does wants to find that section, and a stack of separated cards is
+    scannable in a way an unbroken column is not.
+
+    A body with no `h2` comes back from `splitIntoSections` as a single group,
+    so any other CMS page rendered through here still gets the old single
+    container without a special case.
+  -->
   <section class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl font-bold">{page?.title ?? 'איך משחקים'}</h1>
     {
-      page?.body ? (
-        <div class="mt-6"><PortableText value={page.body} /></div>
+      sections.length > 0 ? (
+        <div class="flex flex-col gap-4">
+          {sections.map((blocks) => (
+            <article class="rounded-xl bg-white p-6 shadow-sm sm:p-8">
+              <PortableText value={blocks} />
+            </article>
+          ))}
+        </div>
       ) : (
-        <p class="mt-6">התוכן בהכנה ויעלה בקרוב.</p>
+        <p>התוכן בהכנה ויעלה בקרוב.</p>
       )
     }
   </section>
