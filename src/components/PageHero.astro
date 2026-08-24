@@ -1,40 +1,51 @@
 ---
-import HeroBackdrop from './HeroBackdrop.astro';
-import type { SanityImage as SanityImageType } from '../lib/sanity/types';
-
 /**
- * The homepage's opening treatment, cut down for an inner page: the same
- * photograph running behind the header, the same scrim, the same right-attached
- * column — in a band rather than a full screen.
+ * The title band on an inner page: the same right-attached column the homepage
+ * opens with, sitting over whatever backdrop the page has installed.
  *
- * A full screen is wrong here and was the option rejected at mockup. Someone
- * arriving at the instructions has come to read the rules, usually after
- * scanning a printed card outdoors; making them scroll a viewport of scenery
- * first is brand continuity bought with the reader's time.
+ * It carries no photograph of its own. On these pages the picture is fixed to
+ * the viewport by the layout's `backdrop` slot and stays still while the
+ * content scrolls over it, so a second copy inside this section would scroll
+ * away and tear away from the one behind it.
  *
- * `-mt-28 pt-28` is the same cancelling pair the homepage uses: the photograph
- * has to run behind the header, which `BaseLayout` renders above the page slot
- * and the page cannot reach. Pull the section up by the header's height, pad
- * the contents back down by the same amount, and neither element needs to know
- * the other's size. Pages using this must pass `heroOverlay` to `BaseLayout`,
- * which is what drops the header's divider — a hairline ruled across a photo
- * reads as a rendering defect.
+ * A full-screen hero was the option rejected at mockup. Someone arriving at an
+ * inner page has come to read something, usually after scanning a printed card
+ * outdoors; making them scroll a viewport of scenery first is brand continuity
+ * bought with the reader's time.
+ *
+ * `-mt-28 pt-28` is the same cancelling pair the homepage uses: the band has to
+ * start behind the header, which `BaseLayout` renders above the page slot and
+ * the page cannot reach. Pull the section up by the header's height, pad the
+ * contents back down by the same amount, and neither element needs to know the
+ * other's size. Pages using this must pass `heroOverlay` to `BaseLayout`, which
+ * is what drops the header's divider — a hairline ruled across a photo reads as
+ * a rendering defect.
  */
 interface Props {
   title: string;
   lead?: string;
-  image?: SanityImageType;
 }
 
-const { title, lead, image } = Astro.props;
+const { title, lead } = Astro.props;
 ---
 
-<section
-  class="relative isolate -mt-28 flex min-h-112 flex-col overflow-hidden bg-sand pt-28"
->
-  <HeroBackdrop image={image} priority focus="object-[center_35%]" />
+<section class="relative -mt-28 flex min-h-96 flex-col overflow-hidden pt-28">
+  {/*
+    A local halo on top of the page-wide wash: the band is where the photograph
+    is busiest and where the largest type sits, so the title needs more cover
+    than the cards below it do.
 
-  <div class="mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-10">
+    Radial and anchored on the title rather than a linear ramp. A linear one
+    stops dead at the band's bottom edge and rules a visible horizontal seam
+    across the photograph — it was built that way first and the seam is why it
+    isn't now. This fades out in every direction, so the band has no edge.
+  */}
+  <div
+    class="absolute inset-0 bg-radial-[at_78%_45%] from-sand/85 via-sand/40 to-transparent"
+  >
+  </div>
+
+  <div class="relative mx-auto flex w-full max-w-6xl flex-1 items-center px-4 py-10">
     <div class="max-w-xl">
       <h1 class="text-4xl font-bold leading-tight text-brand sm:text-5xl">{title}</h1>
       {/* The shorter measure keeps the line endings off the busiest part of the

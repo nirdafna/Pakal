@@ -26,9 +26,23 @@ interface Props {
    * Tailwind's scanner still finds both values in this file.
    */
   focus?: 'object-center' | 'object-[center_35%]';
+  /**
+   * How hard to knock the photograph back.
+   *
+   * `hero` is the homepage's directional ramp — strong under the copy on the
+   * right, barely there over the product on the left. It exists because the
+   * copy crosses a QR code; the reasoning is below.
+   *
+   * `page` is for a photograph fixed behind a whole scrolling page. There is no
+   * one side the text sits on any more — white cards travel across all of it —
+   * so the wash has to be even, and only heavy enough that the cards read as
+   * the foreground. Sections that need more cover than that add their own ramp
+   * locally, as `PageHero` does under the title.
+   */
+  wash?: 'hero' | 'page';
 }
 
-const { image, priority = false, focus = 'object-center' } = Astro.props;
+const { image, priority = false, focus = 'object-center', wash = 'hero' } = Astro.props;
 ---
 
 {
@@ -57,7 +71,13 @@ const { image, priority = false, focus = 'object-center' } = Astro.props;
         the wrong tool — it adds edges to a background whose problem is already
         too many edges.
       */}
-      <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/88 via-52% to-sand/20" />
+      {
+        wash === 'page' ? (
+          <div class="absolute inset-0 -z-10 bg-sand/55" />
+        ) : (
+          <div class="absolute inset-0 -z-10 bg-linear-to-l from-sand via-sand/88 via-52% to-sand/20" />
+        )
+      }
     </>
   )
 }

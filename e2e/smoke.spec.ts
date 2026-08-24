@@ -242,16 +242,16 @@ test('the hero copy sits on the right half of the screen', async ({ page }) => {
 });
 
 // The instructions page is the first inner page to take the homepage's
-// treatment: photograph behind the header, then one card per numbered rule
-// section instead of ninety blocks in a single column. Both halves are easy to
-// undo by accident — the card split lives in `splitIntoSections`, and the
-// overlap in the same cancelling margin pair the homepage uses.
-test('the instructions page cards each rule section under a photo band', async ({ page }) => {
+// treatment: the photograph fixed behind the whole viewport, the rules in one
+// card per numbered section travelling over it, and no scrollbar. Each half is
+// easy to undo by accident — the card split lives in `splitIntoSections`, the
+// stillness in a single `position: fixed`, and the hidden bar in one utility
+// class that must never take the scrolling with it.
+test('the instructions page cards each rule section', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/how-to-play');
 
   const cards = page.locator('main article');
-  const headings = page.locator('main article h2');
   const cardCount = await cards.count();
 
   test.skip(cardCount === 0, 'no CMS body published for how-to-play');
@@ -262,15 +262,56 @@ test('the instructions page cards each rule section under a photo band', async (
   expect(cardCount).toBeGreaterThan(1);
   // Every card is headed by its own section title — an off-by-one in the split
   // would leave a headless card carrying orphaned paragraphs.
-  expect(await headings.count()).toBe(cardCount);
+  expect(await page.locator('main article h2').count()).toBe(cardCount);
+});
 
-  const photo = page.locator('main section img').first();
-  const [photoBox, headerBox] = [
-    await photo.boundingBox(),
-    await page.locator('header').boundingBox(),
-  ];
-  expect(photoBox, 'no photo band on the instructions page').toBeTruthy();
-  expect(photoBox!.y).toBeLessThanOrEqual(headerBox!.y);
-  // A band, not a full screen — that was the option rejected at mockup.
-  expect(photoBox!.height).toBeLessThan(800);
+test('the instructions photograph holds still while the rules scroll over it', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const photo = page.locator('body > div img').first();
+  test.skip(
+    (await photo.count()) === 0,
+    'no photograph rendered — siteSettings.heroImage not published yet',
+  );
+
+  const firstCard = page.locator('main article').first();
+  const before = { photo: await photo.boundingBox(), card: await firstCard.boundingBox() };
+  expect(before.photo, 'photograph has no layout box').toBeTruthy();
+
+  // Edge to edge, including out past both sides of the text column.
+  expect(before.photo!.width).toBeGreaterThanOrEqual(1280);
+  expect(before.photo!.height).toBeGreaterThanOrEqual(800);
+
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await page.waitForFunction(() => window.scrollY === 600);
+
+  const after = { photo: await photo.boundingBox(), card: await firstCard.boundingBox() };
+  // The card moved by the full scroll distance and the photograph did not move
+  // at all. Together those two are the effect; either alone passes on a layout
+  // that does not have it.
+  expect(after.card!.y).toBeCloseTo(before.card!.y - 600, 0);
+  expect(after.photo!.y).toBeCloseTo(before.photo!.y, 0);
+});
+
+// The bar is hidden; the scrolling must not be. Hiding both would strand a
+// reader on section one with no keyboard, wheel or find-in-page way out, and
+// nothing else in the suite would notice.
+test('the instructions page hides its scrollbar without disabling scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const { scrollbarWidth, scrollable } = await page.evaluate(() => ({
+    scrollbarWidth: getComputedStyle(document.documentElement).scrollbarWidth,
+    scrollable: document.documentElement.scrollHeight > window.innerHeight + 100,
+  }));
+
+  expect(scrollbarWidth).toBe('none');
+  expect(scrollable, 'nothing to scroll — this test would pass vacuously').toBe(true);
+
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => window.scrollY > 0);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });

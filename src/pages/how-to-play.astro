@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroBackdrop from '../components/HeroBackdrop.astro';
 import PageHero from '../components/PageHero.astro';
 import PortableText from '../components/PortableText.astro';
 import { splitIntoSections } from '../lib/portable-text';
@@ -11,8 +12,19 @@ const description = 'חוקי המשחק והדרכים לשחק בחפיסת פ
 const sections = splitIntoSections(page?.body);
 ---
 
-<BaseLayout title='איך משחקים — פק"ל' description={description} heroOverlay>
-  <PageHero title={page?.title ?? 'איך משחקים'} lead={description} image={settings?.heroImage} />
+<BaseLayout title='איך משחקים — פק"ל' description={description} heroOverlay hideScrollbar>
+  <!--
+    The photograph fills the viewport and stays there. The layout fixes this
+    slot, so the picture holds still — edge to edge, behind the header and out
+    past both sides of the text column — while the cards travel over it. That
+    stillness, plus the hidden scrollbar, is what makes the rules read as
+    floating on the page rather than sitting in a scrolling frame.
+  -->
+  <Fragment slot="backdrop">
+    <HeroBackdrop image={settings?.heroImage} priority focus="object-[center_35%]" wash="page" />
+  </Fragment>
+
+  <PageHero title={page?.title ?? 'איך משחקים'} lead={description} />
 
   <!--
     One card per numbered rule section rather than one card around all ninety
@@ -24,7 +36,7 @@ const sections = splitIntoSections(page?.body);
     so any other CMS page rendered through here still gets the old single
     container without a special case.
   -->
-  <section class="mx-auto max-w-3xl px-4 py-12">
+  <section class="mx-auto max-w-3xl px-4 pb-16 pt-4">
     {
       sections.length > 0 ? (
         <div class="flex flex-col gap-4">
