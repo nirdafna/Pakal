@@ -27,17 +27,20 @@ interface Props {
 const { title, lead } = Astro.props;
 ---
 
-<section class="sticky top-0">
+<section class="sticky top-24">
   {/*
     Frosted rather than transparent. A see-through bar would let the cards
     travel visibly *through* the title as they scroll under it; blurring what
     passes behind gives them somewhere to go. The wash is sand, so the
     photograph still reads through the bar rather than being boxed out of it.
 
-    It reaches a header's height above its own box so that at rest the nav and
-    the title sit in one continuous band. Backed only to its own top edge, the
-    frosting started below the nav and read as a stray blurred stripe laid
-    across the photograph. Once pinned that overshoot is simply off-screen.
+    It reaches 7rem above its own box, which is more than the navigation's
+    height, and pins at `top-24`, which is a little less. Those two numbers are
+    deliberately not equal and neither has to be exact: the overshoot covers
+    everything from above the viewport down to the title, so the nav sits in the
+    same unbroken band and no sliver of scrolling card can appear between them.
+    Backed only to its own top edge, the frosting started below the nav and read
+    as a stray blurred stripe laid across the photograph.
 
     No `z-index` on the section, deliberately: the header carries `z-10`, so
     leaving this at the default keeps the overshoot *behind* the nav rather

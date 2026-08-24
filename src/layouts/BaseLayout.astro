@@ -23,9 +23,17 @@ interface Props {
    * much is left" signal.
    */
   hideScrollbar?: boolean;
+  /** Pins the navigation, so a reader deep in a long page can still leave it. */
+  stickyHeader?: boolean;
 }
 
-const { title, description, heroOverlay = false, hideScrollbar = false } = Astro.props;
+const {
+  title,
+  description,
+  heroOverlay = false,
+  hideScrollbar = false,
+  stickyHeader = false,
+} = Astro.props;
 
 // Rendered only when a page fills it, and wrapped here rather than by the page:
 // `position: fixed` resolves against the viewport, so the photograph stays put
@@ -68,7 +76,7 @@ const hasBackdrop = Astro.slots.has('backdrop');
       that depends on which element the browser propagated it from. `Header`
       already carries `relative z-10` for the homepage's overlap.
     */}
-    <Header overBackdrop={heroOverlay} />
+    <Header overBackdrop={heroOverlay} sticky={stickyHeader} />
     <main class:list={['flex-1', hasBackdrop && 'relative']}>
       <slot />
     </main>

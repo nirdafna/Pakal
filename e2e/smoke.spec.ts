@@ -331,9 +331,29 @@ test('the instructions title stays put while the rules scroll past it', async ({
   await page.waitForFunction(() => window.scrollY === 700);
 
   const after = await heading.boundingBox();
-  // Still on screen and pinned near the top — without `sticky` it would have
-  // travelled the full 700px and be far above the viewport.
-  expect(after!.y).toBeGreaterThanOrEqual(0);
-  expect(after!.y).toBeLessThan(before!.y);
+  // It does not move at all. The navigation above it is pinned too and is
+  // exactly as tall as the offset this bar pins at, so the title occupies the
+  // same strip of screen at rest and at full scroll. Without `sticky` it would
+  // have travelled the full 700px and sat far above the viewport.
+  expect(after!.y).toBeCloseTo(before!.y, 0);
   await expect(heading).toBeInViewport();
+});
+
+// The point of pinning the navigation: a reader who has scrolled deep into the
+// rules can still leave the page. Without it the only way out is to scroll all
+// the way back to the top, which on a ninety-block page is a long way.
+test('the instructions navigation stays reachable from deep in the page', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  await page.evaluate(() => window.scrollTo(0, 1500));
+  await page.waitForFunction(() => window.scrollY === 1500);
+
+  // A real link, not the header box: the header could be pinned and still have
+  // its contents scrolled out of it.
+  await expect(page.getByRole('link', { name: 'דף הבית', exact: true })).toBeInViewport();
+  // And the nav still sits above the title it shares the band with.
+  const nav = await page.locator('header').boundingBox();
+  const heading = await page.locator('main h1').boundingBox();
+  expect(nav!.y + nav!.height).toBeLessThanOrEqual(heading!.y + 1);
 });

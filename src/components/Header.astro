@@ -8,9 +8,15 @@ interface Props {
    * rendering defect rather than as structure.
    */
   overBackdrop?: boolean;
+  /**
+   * Pins the navigation to the top of the viewport. Set by pages long enough
+   * that a reader can get deep into them — without it the only way out of the
+   * page is to scroll all the way back up.
+   */
+  sticky?: boolean;
 }
 
-const { overBackdrop = false } = Astro.props;
+const { overBackdrop = false, sticky = false } = Astro.props;
 
 const links = [
   { href: '/', label: 'דף הבית' },
@@ -39,12 +45,20 @@ const linkClass = (href: string) =>
   block under the site's CSP and nothing to load on a phone with bad reception.
   This header is the first thing a stranger sees after scanning a printed card.
 
-  `relative z-10` unconditionally, on every page: the homepage hero follows this
-  element in the document and pulls itself up behind it with a negative margin,
-  so without a stacking position of its own the photograph would paint over the
-  navigation. Positioning here costs the other pages nothing.
+  Positioned and `z-10` unconditionally, on every page: the homepage hero
+  follows this element in the document and pulls itself up behind it with a
+  negative margin, so without a stacking position of its own the photograph
+  would paint over the navigation. Positioning here costs the other pages
+  nothing, and the z-index is what lets a sticky title bar slide its own
+  backing up behind the nav instead of over it.
 -->
-<header class:list={['relative z-10', !overBackdrop && 'border-b border-black/10']}>
+<header
+  class:list={[
+    sticky ? 'sticky top-0' : 'relative',
+    'z-10',
+    !overBackdrop && 'border-b border-black/10',
+  ]}
+>
   <nav class="relative mx-auto flex max-w-6xl items-center gap-6 px-4 py-4" aria-label="ניווט ראשי">
     <a href="/" class="shrink-0" aria-label='פק"ל — דף הבית'><Wordmark size="sm" /></a>
 
