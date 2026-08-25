@@ -417,3 +417,65 @@ test('the phone hero keeps its buttons off the card in the photograph', async ({
   const heading = await page.locator('main section h1').boundingBox();
   expect(heading!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
 });
+
+// The instructions page's top should read like the homepage's — the photograph
+// visible behind the navigation — but its title bar is pinned, so it also has
+// to be opaque enough that rule cards do not show through as they pass under
+// it. Those two only reconcile in time: transparent at the top of the page,
+// where there is nothing underneath yet, frosted once the page has moved.
+//
+// Where scroll-driven animations are unsupported the rule never applies and the
+// bar stays frosted throughout, which is the safe half of the trade rather than
+// the broken one. This browser supports them, so the test asserts the enhanced
+// behaviour; `CSS.supports` is checked first so it cannot pass vacuously.
+test('the instructions bar shows the photograph until the page is scrolled', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const supported = await page.evaluate(() =>
+    CSS.supports('animation-timeline', 'scroll(root)'),
+  );
+  test.skip(!supported, 'no scroll-driven animation support in this browser');
+
+  const frost = page.locator('.frost-on-scroll').first();
+  await expect(frost).toHaveCount(1);
+
+  const opacity = () => frost.evaluate((el) => Number(getComputedStyle(el).opacity));
+  expect(await opacity(), 'the frosting hides the photograph at rest').toBeLessThan(0.05);
+
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await page.waitForFunction(() => window.scrollY === 300);
+  expect(await opacity(), 'the frosting never arrived, so cards show through').toBeGreaterThan(
+    0.95,
+  );
+});
+
+// The scrim's ramp is horizontal, which only works while there is a left and a
+// right to it. On a phone the copy spans the full width, the ramp compresses
+// into that span, and the far end of every line lands in its transparent stop —
+// measured at 375px it left the homepage's lead at 2.67:1 against the ink,
+// against the 4.5:1 body text needs. Below `sm` the wash is even instead.
+//
+// Asserted as a shape rather than a contrast ratio: the suite has no image
+// reader, so what it can check is that the phone gets a flat wash and the wide
+// screen gets the gradient. Both directions matter — dropping the flat colour
+// fails the phone, dropping the breakpoint costs the desktop its ramp.
+test('the scrim washes evenly on a phone and ramps on a wide screen', async ({ page }) => {
+  const scrimStyle = async () =>
+    page.locator('main section img').first().evaluate((img) => {
+      const scrim = img.nextElementSibling as HTMLElement;
+      const cs = getComputedStyle(scrim);
+      return { image: cs.backgroundImage, color: cs.backgroundColor };
+    });
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  const phone = await scrimStyle();
+  expect(phone.image, 'a phone still gets the compressed ramp').toBe('none');
+  expect(phone.color, 'a phone gets no wash at all').not.toBe('rgba(0, 0, 0, 0)');
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  const wide = await scrimStyle();
+  expect(wide.image, 'the wide screen lost its ramp').toContain('gradient');
+});

@@ -21,7 +21,7 @@ const sections = splitIntoSections(page?.body);
     floating on the page rather than sitting in a scrolling frame.
   -->
   <Fragment slot="backdrop">
-    <HeroBackdrop image={settings?.heroImage} priority focus="object-[center_35%]" wash="page" />
+    <HeroBackdrop image={settings?.heroImage} priority focus="object-[center_35%]" />
   </Fragment>
 
   <PageHero title={page?.title ?? 'איך משחקים'} lead={description} />
