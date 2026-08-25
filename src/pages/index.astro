@@ -54,7 +54,7 @@ const features = [
   <section class="relative isolate -mt-32 flex min-h-svh flex-col overflow-hidden bg-sand pt-32">
     <HeroBackdrop image={settings?.heroImage} priority />
 
-    <div class="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 py-10">
+    <div class="mx-auto flex w-full max-w-6xl flex-1 items-start px-4 pb-10 pt-2 sm:pt-10">
       {/*
         A column held against the inline-start edge — the right, in an RTL
         document — so the copy sits clear of the box and cards on the left of
@@ -68,8 +68,8 @@ const features = [
         {/* A shorter measure than the column: it pulls the line endings back
             off the QR code in the photograph, and 45-ish characters is an
             easier read than the full 576px anyway. */}
-        <p class="mx-auto mt-8 max-w-md text-lg">{heroText}</p>
-        <div class="mt-8 flex flex-wrap justify-center gap-4">
+        <p class="mx-auto mt-4 max-w-md text-lg sm:mt-8">{heroText}</p>
+        <div class="mt-5 flex flex-wrap justify-center gap-3 sm:mt-8 sm:gap-4">
           {
             settings?.whatsappPhone && (
               <WhatsAppCta
@@ -92,7 +92,7 @@ const features = [
             למסלולים שבחפיסה
           </a>
         </div>
-        <p class="mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
+        <p class="mt-3 sm:mt-4"><a class="underline" href="/how-to-play">איך משחקים?</a></p>
       </div>
     </div>
 

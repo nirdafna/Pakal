@@ -387,3 +387,27 @@ test('the homepage carries a larger brand mark than the inner pages', async ({ p
   expect(photo, 'no hero photograph').toBeTruthy();
   expect(photo!.y).toBeLessThanOrEqual(home!.y);
 });
+
+// On a phone the hero's buttons landed exactly on top of a card *in the
+// photograph* — the outlined one had "נחל כזיב" showing through its label. The
+// photograph is fixed content, so the fix was to lift the copy, and this is
+// what stops it drifting back down: any line of copy or spacing that grows on
+// mobile pushes the buttons back onto the card, and nothing else would notice.
+//
+// 432 is measured, not chosen: at 390x844 the published photograph puts the top
+// edge of that card there. Replacing the photograph means re-measuring it.
+test('the phone hero keeps its buttons off the card in the photograph', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+
+  const cta = await page
+    .getByRole('link', { name: 'למסלולים שבחפיסה' })
+    .boundingBox();
+  expect(cta, 'no route-list call to action').toBeTruthy();
+  expect(cta!.y + cta!.height).toBeLessThanOrEqual(430);
+
+  // And it did not get there by crowding the navigation.
+  const header = await page.locator('header').boundingBox();
+  const heading = await page.locator('main section h1').boundingBox();
+  expect(heading!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+});
