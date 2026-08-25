@@ -14,9 +14,15 @@ interface Props {
    * page is to scroll all the way back up.
    */
   sticky?: boolean;
+  /**
+   * Renders the brand mark a size up. The homepage is the one page whose job is
+   * the brand itself; everywhere else the mark is wayfinding and a bigger one
+   * would just take reading room.
+   */
+  largeMark?: boolean;
 }
 
-const { overBackdrop = false, sticky = false } = Astro.props;
+const { overBackdrop = false, sticky = false, largeMark = false } = Astro.props;
 
 const links = [
   { href: '/', label: 'דף הבית' },
@@ -60,7 +66,9 @@ const linkClass = (href: string) =>
   ]}
 >
   <nav class="relative mx-auto flex max-w-6xl items-center gap-6 px-4 py-4" aria-label="ניווט ראשי">
-    <a href="/" class="shrink-0" aria-label='פק"ל — דף הבית'><Wordmark size="sm" /></a>
+    <a href="/" class="shrink-0" aria-label='פק"ל — דף הבית'>
+      <Wordmark size={largeMark ? 'md' : 'sm'} />
+    </a>
 
     <ul class="hidden flex-wrap gap-4 text-sm sm:flex">
       {

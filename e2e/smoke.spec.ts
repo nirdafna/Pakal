@@ -226,18 +226,26 @@ test('the hero copy sits on the right half of the screen', async ({ page }) => {
   await page.goto('/');
 
   // Measured against the hero container's own right edge rather than against
-  // the middle of the screen: a centred `max-w-xl` column still has its heading
-  // in the right half, so a midpoint assertion passes on the layout this test
-  // exists to reject. The gap allowed here is the container's own `px-4`.
-  const heading = await page.locator('main section h1').boundingBox();
+  // the middle of the screen: a centred `max-w-xl` column still has most of its
+  // content in the right half, so a midpoint assertion passes on the layout
+  // this test exists to reject. The gap allowed here is the container's own
+  // `px-4`.
+  //
+  // The COLUMN is what is pinned right, not the heading: the copy is centred
+  // inside the column, so the mark's own edges float. Measuring the heading
+  // would fail on a layout that is correct.
   const container = await page
     .locator('main section > div')
     .filter({ has: page.locator('h1') })
     .boundingBox();
-  expect(heading, 'no h1 layout box').toBeTruthy();
+  const column = await page
+    .locator('main section > div > div')
+    .filter({ has: page.locator('h1') })
+    .boundingBox();
   expect(container, 'no hero container layout box').toBeTruthy();
+  expect(column, 'no hero copy column layout box').toBeTruthy();
 
-  const gapToRightEdge = container!.x + container!.width - (heading!.x + heading!.width);
+  const gapToRightEdge = container!.x + container!.width - (column!.x + column!.width);
   expect(gapToRightEdge).toBeLessThanOrEqual(40);
 });
 
@@ -356,4 +364,26 @@ test('the instructions navigation stays reachable from deep in the page', async 
   const nav = await page.locator('header').boundingBox();
   const heading = await page.locator('main h1').boundingBox();
   expect(nav!.y + nav!.height).toBeLessThanOrEqual(heading!.y + 1);
+});
+
+// The homepage's brand mark is a size up, and the hero's overlap with the
+// header has to keep covering it. Those two are only correct together: growing
+// the mark without growing the overlap leaves a strip of bare sand above the
+// photograph, which is exactly the kind of thing a screenshot at one viewport
+// misses. Asserted as a comparison between the two pages, so it fails if the
+// homepage stops asking for the larger mark *or* if an inner page starts.
+test('the homepage carries a larger brand mark than the inner pages', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+
+  await page.goto('/how-to-play');
+  const inner = await page.locator('header').boundingBox();
+
+  await page.goto('/');
+  const home = await page.locator('header').boundingBox();
+  const photo = await page.locator('main section img').first().boundingBox();
+
+  expect(home!.height).toBeGreaterThan(inner!.height);
+  // And the photograph still starts at or above the taller header's top edge.
+  expect(photo, 'no hero photograph').toBeTruthy();
+  expect(photo!.y).toBeLessThanOrEqual(home!.y);
 });

@@ -17,7 +17,11 @@ interface Props {
   title?: string;
   /** Defaults to the brand tagline; CMS `heroTagline` overrides it. */
   tagline?: string;
-  size?: 'sm' | 'lg';
+  /**
+   * `sm` is the navigation mark, `md` the same mark given more presence in the
+   * homepage's header, `lg` the hero mark.
+   */
+  size?: 'sm' | 'md' | 'lg';
   /** Card suits sit under the header mark, not the hero one, as in the mockup. */
   suits?: boolean;
   /** Renders the wordmark as the page's `h1` instead of a plain span. */
@@ -28,7 +32,7 @@ const {
   title = 'פק"ל',
   tagline = 'נהנים בכל דרך',
   size = 'sm',
-  suits = size === 'sm',
+  suits = size !== 'lg',
   heading = false,
 } = Astro.props;
 
@@ -41,16 +45,22 @@ const pinIndex = title.indexOf('פ');
 const before = pinIndex === -1 ? title : title.slice(0, pinIndex);
 const after = pinIndex === -1 ? '' : title.slice(pinIndex + 1);
 
-const wordmarkSize = size === 'lg' ? 'text-6xl sm:text-7xl' : 'text-2xl';
-const taglineSize = size === 'lg' ? 'text-2xl sm:text-3xl' : 'text-xs';
-const suitSize = size === 'lg' ? 'text-lg' : 'text-[0.7rem]';
-// Both are em-relative so the pin scales with the wordmark rather than needing
-// a second set of numbers per size. They are the two knobs worth nudging if the
-// mark ever changes typeface: the offset drops the pin into the counter of the
-// פ, and the width keeps it clear of the surrounding strokes.
-const pinSize = size === 'lg' ? 'w-[0.19em]' : 'w-[0.22em]';
+// One row per size rather than a chain of ternaries: the mark has five things
+// that scale together, and reading a size down a column is how you check they
+// still agree.
+//
+// The pin and the brush are em-relative, so they follow the wordmark's own type
+// size instead of needing their own numbers per row. They are the two knobs
+// worth nudging if the mark ever changes typeface: the offset drops the pin into
+// the counter of the פ, and the width keeps it clear of the surrounding strokes.
+const scale = {
+  sm: { wordmark: 'text-2xl', tagline: 'text-xs', suit: 'text-[0.7rem]', pin: 'w-[0.22em]', brush: 'h-1' },
+  md: { wordmark: 'text-4xl', tagline: 'text-sm', suit: 'text-[0.95rem]', pin: 'w-[0.21em]', brush: 'h-1.5' },
+  lg: { wordmark: 'text-6xl sm:text-7xl', tagline: 'text-2xl sm:text-3xl', suit: 'text-lg', pin: 'w-[0.19em]', brush: 'h-2' },
+}[size];
+
+const { wordmark: wordmarkSize, tagline: taglineSize, suit: suitSize, pin: pinSize, brush: brushHeight } = scale;
 const pinOffset = 'top-[0.44em]';
-const brushHeight = size === 'lg' ? 'h-2' : 'h-1';
 const Tag = heading ? 'h1' : 'span';
 ---
 

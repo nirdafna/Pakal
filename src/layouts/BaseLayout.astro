@@ -25,6 +25,8 @@ interface Props {
   hideScrollbar?: boolean;
   /** Pins the navigation, so a reader deep in a long page can still leave it. */
   stickyHeader?: boolean;
+  /** Renders the header's brand mark a size up. The homepage only. */
+  largeHeaderMark?: boolean;
 }
 
 const {
@@ -33,6 +35,7 @@ const {
   heroOverlay = false,
   hideScrollbar = false,
   stickyHeader = false,
+  largeHeaderMark = false,
 } = Astro.props;
 
 // Rendered only when a page fills it, and wrapped here rather than by the page:
@@ -76,7 +79,7 @@ const hasBackdrop = Astro.slots.has('backdrop');
       that depends on which element the browser propagated it from. `Header`
       already carries `relative z-10` for the homepage's overlap.
     */}
-    <Header overBackdrop={heroOverlay} sticky={stickyHeader} />
+    <Header overBackdrop={heroOverlay} sticky={stickyHeader} largeMark={largeHeaderMark} />
     <main class:list={['flex-1', hasBackdrop && 'relative']}>
       <slot />
     </main>
