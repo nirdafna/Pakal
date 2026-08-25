@@ -388,23 +388,29 @@ test('the homepage carries a larger brand mark than the inner pages', async ({ p
   expect(photo!.y).toBeLessThanOrEqual(home!.y);
 });
 
-// On a phone the hero's buttons landed exactly on top of a card *in the
-// photograph* — the outlined one had "נחל כזיב" showing through its label. The
-// photograph is fixed content, so the fix was to lift the copy, and this is
-// what stops it drifting back down: any line of copy or spacing that grows on
-// mobile pushes the buttons back onto the card, and nothing else would notice.
+// On a phone the hero's buttons landed on top of a card *inside the
+// photograph* — the card's own label showed through the outlined button. The
+// photograph is fixed content, so the copy is what had to move.
 //
-// 432 is measured, not chosen: at 390x844 the published photograph puts the top
-// edge of that card there. Replacing the photograph means re-measuring it.
+// Tested at 360, the narrow end of the phone range and the worst case: the lead
+// has least room there, and a third line of it is what pushed the buttons down
+// onto the card in the first place. The line count is the real mechanism and is
+// asserted directly; the position bound is the outcome. Either one alone would
+// let this regress — copy can grow without rewrapping, and it can rewrap
+// without growing.
 test('the phone hero keeps its buttons off the card in the photograph', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 360, height: 800 });
   await page.goto('/');
 
-  const cta = await page
-    .getByRole('link', { name: 'למסלולים שבחפיסה' })
-    .boundingBox();
+  const leadLines = await page.evaluate(() => {
+    const p = document.querySelector('main section p')!;
+    return Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight));
+  });
+  expect(leadLines, 'the lead rewrapped and pushed the buttons down').toBeLessThanOrEqual(2);
+
+  const cta = await page.getByRole('link', { name: 'למסלולים שבחפיסה' }).boundingBox();
   expect(cta, 'no route-list call to action').toBeTruthy();
-  expect(cta!.y + cta!.height).toBeLessThanOrEqual(430);
+  expect(cta!.y + cta!.height).toBeLessThanOrEqual(415);
 
   // And it did not get there by crowding the navigation.
   const header = await page.locator('header').boundingBox();
