@@ -449,3 +449,33 @@ test('the instructions bar shows the photograph until the page is scrolled', asy
     0.95,
   );
 });
+
+// The scrim's ramp is horizontal, which only works while there is a left and a
+// right to it. On a phone the copy spans the full width, the ramp compresses
+// into that span, and the far end of every line lands in its transparent stop —
+// measured at 375px it left the homepage's lead at 2.67:1 against the ink,
+// against the 4.5:1 body text needs. Below `sm` the wash is even instead.
+//
+// Asserted as a shape rather than a contrast ratio: the suite has no image
+// reader, so what it can check is that the phone gets a flat wash and the wide
+// screen gets the gradient. Both directions matter — dropping the flat colour
+// fails the phone, dropping the breakpoint costs the desktop its ramp.
+test('the scrim washes evenly on a phone and ramps on a wide screen', async ({ page }) => {
+  const scrimStyle = async () =>
+    page.locator('main section img').first().evaluate((img) => {
+      const scrim = img.nextElementSibling as HTMLElement;
+      const cs = getComputedStyle(scrim);
+      return { image: cs.backgroundImage, color: cs.backgroundColor };
+    });
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  const phone = await scrimStyle();
+  expect(phone.image, 'a phone still gets the compressed ramp').toBe('none');
+  expect(phone.color, 'a phone gets no wash at all').not.toBe('rgba(0, 0, 0, 0)');
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  const wide = await scrimStyle();
+  expect(wide.image, 'the wide screen lost its ramp').toContain('gradient');
+});

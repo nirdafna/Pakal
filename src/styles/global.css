@@ -183,3 +183,12 @@ summary::-webkit-details-marker {
     animation-range: 0 7rem;
   }
 }
+
+/* Softens a frosted bar's lower edge so it never draws a hard line across the
+   photograph behind it. The bar's own job is to hide what scrolls underneath;
+   an abrupt edge turns it into a banner laid over the picture, which is exactly
+   the seam the page-wide gradient exists to avoid. Both spellings, as above. */
+.mask-fade-bottom {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, rgb(0 0 0) 1.5rem);
+  mask-image: linear-gradient(to top, transparent 0, rgb(0 0 0) 1.5rem);
+}
