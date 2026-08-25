@@ -387,3 +387,33 @@ test('the homepage carries a larger brand mark than the inner pages', async ({ p
   expect(photo, 'no hero photograph').toBeTruthy();
   expect(photo!.y).toBeLessThanOrEqual(home!.y);
 });
+
+// On a phone the hero's buttons landed on top of a card *inside the
+// photograph* — the card's own label showed through the outlined button. The
+// photograph is fixed content, so the copy is what had to move.
+//
+// Tested at 360, the narrow end of the phone range and the worst case: the lead
+// has least room there, and a third line of it is what pushed the buttons down
+// onto the card in the first place. The line count is the real mechanism and is
+// asserted directly; the position bound is the outcome. Either one alone would
+// let this regress — copy can grow without rewrapping, and it can rewrap
+// without growing.
+test('the phone hero keeps its buttons off the card in the photograph', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto('/');
+
+  const leadLines = await page.evaluate(() => {
+    const p = document.querySelector('main section p')!;
+    return Math.round(p.getBoundingClientRect().height / parseFloat(getComputedStyle(p).lineHeight));
+  });
+  expect(leadLines, 'the lead rewrapped and pushed the buttons down').toBeLessThanOrEqual(2);
+
+  const cta = await page.getByRole('link', { name: 'למסלולים שבחפיסה' }).boundingBox();
+  expect(cta, 'no route-list call to action').toBeTruthy();
+  expect(cta!.y + cta!.height).toBeLessThanOrEqual(415);
+
+  // And it did not get there by crowding the navigation.
+  const header = await page.locator('header').boundingBox();
+  const heading = await page.locator('main section h1').boundingBox();
+  expect(heading!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
+});
