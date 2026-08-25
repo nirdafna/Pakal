@@ -417,3 +417,35 @@ test('the phone hero keeps its buttons off the card in the photograph', async ({
   const heading = await page.locator('main section h1').boundingBox();
   expect(heading!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
 });
+
+// The instructions page's top should read like the homepage's — the photograph
+// visible behind the navigation — but its title bar is pinned, so it also has
+// to be opaque enough that rule cards do not show through as they pass under
+// it. Those two only reconcile in time: transparent at the top of the page,
+// where there is nothing underneath yet, frosted once the page has moved.
+//
+// Where scroll-driven animations are unsupported the rule never applies and the
+// bar stays frosted throughout, which is the safe half of the trade rather than
+// the broken one. This browser supports them, so the test asserts the enhanced
+// behaviour; `CSS.supports` is checked first so it cannot pass vacuously.
+test('the instructions bar shows the photograph until the page is scrolled', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/how-to-play');
+
+  const supported = await page.evaluate(() =>
+    CSS.supports('animation-timeline', 'scroll(root)'),
+  );
+  test.skip(!supported, 'no scroll-driven animation support in this browser');
+
+  const frost = page.locator('.frost-on-scroll').first();
+  await expect(frost).toHaveCount(1);
+
+  const opacity = () => frost.evaluate((el) => Number(getComputedStyle(el).opacity));
+  expect(await opacity(), 'the frosting hides the photograph at rest').toBeLessThan(0.05);
+
+  await page.evaluate(() => window.scrollTo(0, 300));
+  await page.waitForFunction(() => window.scrollY === 300);
+  expect(await opacity(), 'the frosting never arrived, so cards show through').toBeGreaterThan(
+    0.95,
+  );
+});

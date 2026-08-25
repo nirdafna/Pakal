@@ -145,3 +145,41 @@ summary::-webkit-details-marker {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Frosting that is only there once the page has been scrolled.
+
+   The pinned title bar has to be opaque enough that rule cards do not show
+   through it as they travel underneath — but at the top of the page there is
+   nothing underneath it yet, and the frosting simply hides the photograph,
+   leaving a flat beige band where the homepage shows the picture.
+
+   So it fades in over the first 7rem of scroll. `@supports` is doing real work
+   here: where scroll-driven animations are not available the rule never applies
+   and the bar keeps its frosting at all times, which is the safe behaviour
+   rather than the broken one. No JavaScript, so nothing for the CSP to block
+   and nothing to load on a phone with bad reception. */
+@keyframes frost-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@supports (animation-timeline: scroll(root)) {
+  /* Longhands, and `animation-duration: auto` specifically: written as the
+     `animation` shorthand, the build's CSS minifier folds `animation-timeline`
+     into it, and a timeline is not a valid shorthand component — the whole
+     declaration is dropped and the bar silently keeps its frosting. `auto` is
+     not a legal shorthand duration, so the longhands survive minification, and
+     it is the correct duration for a scroll-driven animation anyway. */
+  .frost-on-scroll {
+    animation-name: frost-in;
+    animation-duration: auto;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 7rem;
+  }
+}
