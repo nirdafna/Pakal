@@ -145,3 +145,20 @@ summary::-webkit-details-marker {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Fades a scrim out towards the top of its box, so the photograph behind it
+   still shows through the header strip.
+
+   The homepage's scrim is a horizontal ramp that reaches full sand on the right
+   — which is where the brand mark sits, so the top-right corner of the page was
+   flat #ebe1cf with no photograph in it at all. Masking the scrim rather than
+   weakening it keeps the ramp exactly as measured everywhere the copy actually
+   sits: the mask is back to full strength by 9rem, below any header this site
+   renders, so the QR-code legibility work below it is untouched.
+
+   Both spellings: Safari only dropped the -webkit- prefix in 15.4, and this is
+   a site whose readers arrive on whatever phone they had in their pocket. */
+.mask-fade-top {
+  -webkit-mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.3) 0, rgb(0 0 0) 9rem);
+  mask-image: linear-gradient(to bottom, rgb(0 0 0 / 0.3) 0, rgb(0 0 0) 9rem);
+}

@@ -417,3 +417,33 @@ test('the phone hero keeps its buttons off the card in the photograph', async ({
   const heading = await page.locator('main section h1').boundingBox();
   expect(heading!.y).toBeGreaterThanOrEqual(header!.y + header!.height);
 });
+
+// The homepage's scrim is a horizontal ramp that reaches full sand on the right
+// — which is exactly where the brand mark sits, so the top-right corner of the
+// page rendered as flat #ebe1cf with no photograph in it at all. Masking the
+// scrim's top lets the picture through the header strip without touching the
+// ramp lower down, where the QR-code legibility work lives.
+//
+// This asserts the mechanism, not the pixels: the suite has no image-reading
+// tool, so what it can check is that the mask is still applied and still stops
+// short of the copy. Removing the class, or deleting the rule from global.css,
+// fails it.
+test('the homepage lets the photograph through behind the header', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+
+  const scrim = page.locator('main section div.mask-fade-top').first();
+  await expect(scrim).toHaveCount(1);
+
+  const mask = await scrim.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return cs.maskImage || cs.webkitMaskImage;
+  });
+  expect(mask, 'the scrim carries no mask, so the header strip is flat sand').not.toBe('none');
+  expect(mask).toContain('linear-gradient');
+
+  // The inner pages use the even `page` wash and must not pick this up — their
+  // photograph is fixed behind the whole document, not just the first screen.
+  await page.goto('/how-to-play');
+  await expect(page.locator('.mask-fade-top')).toHaveCount(0);
+});
